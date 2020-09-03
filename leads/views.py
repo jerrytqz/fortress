@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from leads.models import User, BlacklistedJWT, InventoryItem, Item
 from django.contrib.auth.hashers import make_password, check_password 
 from spin_backend.settings import JWT_SECRET
@@ -13,7 +12,6 @@ import time
 
 # Create your views here.
 
-@csrf_exempt
 def login(request):
     if request.method != 'POST':
         return JsonResponse({
@@ -38,7 +36,6 @@ def login(request):
     })
     return response 
 
-@csrf_exempt    
 def register(request):
     if request.method != 'POST':
         return JsonResponse({
@@ -66,7 +63,6 @@ def register(request):
         'token': encoded
     })
 
-@csrf_exempt
 def logout(request):
     if request.method != 'POST':
         return JsonResponse({
@@ -84,7 +80,6 @@ def logout(request):
     BlacklistedJWT.objects.create(jwt=request.headers.get('Authorization'))
     return JsonResponse({})
 
-@csrf_exempt
 def fetch_sp(request):
     if request.method != 'GET':
         return JsonResponse({'fetchError': "REQUEST TYPE ERROR"}, status=400)
@@ -100,7 +95,6 @@ def fetch_sp(request):
     user = User.objects.get(username=decoded['username'])
     return JsonResponse({'SP': user.SP})
 
-@csrf_exempt
 def purchase_spin(request):
     if request.method != 'POST':
         return JsonResponse({'purchaseError': "Request type error"}, status=400)
@@ -122,13 +116,15 @@ def purchase_spin(request):
                     try refreshing the page and logging back in"""
         }, status=401)
 
+    # Subtract SP 
     user = User.objects.get(username=decoded['username'])
     if user.SP - 500 < 0:
         return JsonResponse({'purchaseError': "Not enough SP"}, status=400)
     user.SP = user.SP - 500
     user.save()
     
-    degree = random.random()*360
+    # Determine item
+    degree = 359.99
     item = Item.objects.filter(rarity=mapDegreeToRarity(degree))
     index = random.randrange(item.count()) 
     obj, created = InventoryItem.objects.get_or_create(
@@ -140,9 +136,12 @@ def purchase_spin(request):
         obj.quantity += 1
         obj.save()
 
-    return JsonResponse({'SP': user.SP, 'degree': degree})
+    # Create response 
+    response = {'SP': user.SP, 'degree': degree}
+    response['item'] = {'name': '{}'.format(obj.item), 'rarity': 
+        "{}".format(obj.item.rarity)}
+    return JsonResponse(response)
 
-@csrf_exempt
 def auto_log_in(request):
     if request.method != 'POST':
         return JsonResponse({'error': "Request type error"}, status=400)
@@ -157,13 +156,13 @@ def auto_log_in(request):
         return JsonResponse({}, status=401)
     return JsonResponse({})
 
-@csrf_exempt
 def fetch_inventory(request):
     if request.method != 'GET':
         return JsonResponse({'fetchError': "Request type error"}, status=400)
     for BJwt in BlacklistedJWT.objects.all():
         if request.headers.get('Authorization') == BJwt.jwt:
-            return JsonResponse({'fetchError': "Must be logged in..."}, status=401)
+            return JsonResponse({'fetchError': "Must be logged in..."}, 
+                    status=401)
     try:
         decoded = jwt.decode(request.headers.get('Authorization'), 
                 JWT_SECRET, 

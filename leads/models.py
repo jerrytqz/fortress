@@ -23,11 +23,17 @@ class Item(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta: 
+        ordering = ['name']
+
 class InventoryItem(models.Model): 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity = models.IntegerField()
 
     def __str__(self):
-        return self.user.username
+        return self.user.username + ' | ' + self.item.name
+
+    class Meta: 
+        ordering = ['user', 'item']
     
