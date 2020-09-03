@@ -13,4 +13,3 @@ def mapDegreeToRarity(degree):
         return 'Godly'
     if 359.964 <= degree and degree < 360:
         return '???'
-        
