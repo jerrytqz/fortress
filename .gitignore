@@ -1,0 +1,6 @@
+db.sqlite3
+spin_backend/settings.py
+temporary
+optimizations1
+.vscode
+__pycache__
