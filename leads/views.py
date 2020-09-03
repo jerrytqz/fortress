@@ -124,7 +124,7 @@ def purchase_spin(request):
     user.save()
     
     # Determine item
-    degree = 359.99
+    degree = random.random()*360
     item = Item.objects.filter(rarity=mapDegreeToRarity(degree))
     index = random.randrange(item.count()) 
     obj, created = InventoryItem.objects.get_or_create(
