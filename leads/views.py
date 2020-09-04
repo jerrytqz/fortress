@@ -136,6 +136,10 @@ def purchase_spin(request):
         obj.quantity += 1
         obj.save()
 
+    # Update stats
+    user.total_spins += 1
+    user.save()
+
     # Create response 
     circulationNum = 0
     circulation = InventoryItem.objects.filter(item=obj.item)
@@ -181,5 +185,23 @@ def fetch_inventory(request):
         response['{}'.format(filtered[x].item)] = {'quantity': 
         filtered[x].quantity, 'rarity': filtered[x].item.rarity, 'id': 
         filtered[x].id}
+    return JsonResponse(response)
+    
+def fetch_profile(request):
+    if request.method != 'GET':
+        return JsonResponse({'fetchError': "Request type error"}, status=400)
+    for BJwt in BlacklistedJWT.objects.all():
+        if request.headers.get('Authorization') == BJwt.jwt:
+            return JsonResponse({'fetchError': "Must be logged in..."}, 
+                    status=401)
+    try:
+        decoded = jwt.decode(request.headers.get('Authorization'), 
+                JWT_SECRET, 
+                algorithms=['HS256'])
+    except:
+        return JsonResponse({'fetchError': "Must be logged in..."}, status=401)
+    user = User.objects.get(username=decoded['username'])
+    response = {'username': decoded['username'], 'stats': {'SP': user.SP,
+            'totalSpins': user.total_spins}}
     return JsonResponse(response)
     
