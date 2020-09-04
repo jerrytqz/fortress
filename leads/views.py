@@ -137,9 +137,14 @@ def purchase_spin(request):
         obj.save()
 
     # Create response 
+    circulationNum = 0
+    circulation = InventoryItem.objects.filter(item=obj.item)
+    for x in range(circulation.count()):
+        circulationNum += circulation[x].quantity
     response = {'SP': user.SP, 'degree': degree}
-    response['item'] = {'name': '{}'.format(obj.item), 'rarity': 
-        "{}".format(obj.item.rarity)}
+    response['item'] = {'name': "{}".format(obj.item), 'rarity': 
+        obj.item.rarity, 'quantity': obj.quantity, 
+        'circulationNum': circulationNum}
     return JsonResponse(response)
 
 def auto_log_in(request):
@@ -174,8 +179,7 @@ def fetch_inventory(request):
     filtered = InventoryItem.objects.filter(user=user)
     for x in range(filtered.count()):
         response['{}'.format(filtered[x].item)] = {'quantity': 
-        "{}".format(filtered[x].quantity), 'rarity': 
-        "{}".format(filtered[x].item.rarity), 'id': 
-        "{}".format(filtered[x].id)}
+        filtered[x].quantity, 'rarity': filtered[x].item.rarity, 'id': 
+        filtered[x].id}
     return JsonResponse(response)
     
