@@ -211,26 +211,22 @@ def fetch_profile(request):
 
     # Find top 3 items according to lowest in_circulation,
     # then rarity, then quantity, then lowest id (oldest)
-    list = []
-    result = []
+    showcaseItems = []
     inventoryItems = InventoryItem.objects.filter(user=user)
     for x in range(inventoryItems.count()):
-        list.append([inventoryItems[x].item.in_circulation,
-            mapRarityToValue(inventoryItems[x].item.rarity),
-            inventoryItems[x].quantity, 
-            inventoryItems[x].id])
-    list = sorted(list, key=lambda el: (el[0], -el[1], -el[2], el[3]))[:3]
-    print(list)
-    for x in list:
-        invItem = InventoryItem.objects.get(id=x[3])
-        result.append({'name': invItem.item.name,
-        'rarity': invItem.item.rarity, 'quantity': invItem.quantity})
+        showcaseItems.append(inventoryItems[x])
+    showcaseItems = sorted(showcaseItems, key=lambda el: 
+    (el.item.in_circulation, -mapRarityToValue(el.item.rarity), 
+    -el.quantity, el.id))[:3]
+    showcaseItems = list(map((lambda el: {'name': el.item.name, 
+        'rarity': el.item.rarity, 'quantity': el.quantity}), showcaseItems))
 
+    # Create response 
     response = {'username': decoded['username'], 'stats': {'SP': user.SP,
             'totalSpins': user.total_spins, '???Unboxed': user.tq_unboxed, 
             'itemsFound': user.items_found, 'totalSpinItems': totalSpinItems},
-            'showcaseItems': {'first': result[0], 'second': result[1], 
-            'third': result[2]}}
+            'showcaseItems': {'first': showcaseItems[0], 
+            'second': showcaseItems[1], 'third': showcaseItems[2]}}
 
     return JsonResponse(response)
     
