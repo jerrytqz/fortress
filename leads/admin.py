@@ -1,8 +1,22 @@
 from django.contrib import admin
 from leads.models import User, BlacklistedJWT, Item, InventoryItem
 
+def update_circulation(modeladmin, request, queryset): 
+    for x in range(queryset.count()):
+        obj = Item.objects.get(name=queryset[x].name)
+        circulationNum = 0
+        circulation = InventoryItem.objects.filter(item=obj)
+        for y in range(circulation.count()):
+            circulationNum += circulation[y].quantity
+        obj.in_circulation = circulationNum
+        obj.save()
+    update_circulation.short_description = "Update circulation number" 
+
+class ItemAdmin(admin.ModelAdmin): 
+    actions = [update_circulation]
+
 # Register your models here.
 admin.site.register(User)
 admin.site.register(BlacklistedJWT)
-admin.site.register(Item)
+admin.site.register(Item, ItemAdmin)
 admin.site.register(InventoryItem)

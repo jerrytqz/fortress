@@ -13,3 +13,19 @@ def mapDegreeToRarity(degree):
         return 'Godly'
     if 359.964 <= degree and degree < 360:
         return '???'
+
+def mapRarityToValue(rarity): 
+    if (rarity == 'Common'): 
+        return 1
+    if (rarity == 'Uncommon'): 
+        return 2
+    if (rarity == 'Rare'):
+        return 3
+    if (rarity == 'Epic'):
+        return 4
+    if (rarity == 'Holy'):
+        return 5
+    if (rarity == 'Godly'):
+        return 6
+    if (rarity == '???'):
+        return 7

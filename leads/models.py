@@ -2,11 +2,13 @@ from django.db import models
 # Create your models here.
 
 class User(models.Model):
-    username = models.CharField(max_length=16)
+    username = models.CharField(max_length=16, unique=True)
     email = models.EmailField()
     password = models.CharField(max_length=128)
     SP = models.IntegerField(default=0)
     total_spins = models.IntegerField(default=0)
+    tq_unboxed = models.IntegerField(default=0)
+    items_found = models.IntegerField(default=0)
 
     def __str__(self):
         return self.username 
@@ -18,8 +20,9 @@ class BlacklistedJWT(models.Model):
         return self.jwt
 
 class Item(models.Model): 
-    name = models.CharField(max_length=64)
+    name = models.CharField(max_length=32, unique=True)
     rarity = models.CharField(max_length=16)
+    in_circulation = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name

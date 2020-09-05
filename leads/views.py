@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from leads.models import User, BlacklistedJWT, InventoryItem, Item
 from django.contrib.auth.hashers import make_password, check_password 
 from spin_backend.settings import JWT_SECRET
-from leads.utility import mapDegreeToRarity
+from leads.utility import mapDegreeToRarity, mapRarityToValue
 
 import jwt
 import random
@@ -123,32 +123,36 @@ def purchase_spin(request):
     user.SP = user.SP - 500
     user.save()
     
-    # Determine item
+    # Determine InventoryItem, add InventoryItem to inventory, and update
+    # InventoryItem's Item's in_circulation 
     degree = random.random()*360
-    item = Item.objects.filter(rarity=mapDegreeToRarity(degree))
-    index = random.randrange(item.count()) 
+    items = Item.objects.filter(rarity=mapDegreeToRarity(degree))
+    index = random.randrange(items.count()) 
     obj, created = InventoryItem.objects.get_or_create(
         user=user,
-        item=item[index],
+        item=items[index],
         defaults={'quantity': 1}
     )
     if not created:
         obj.quantity += 1
         obj.save()
+    item = Item.objects.get(name=items[index].name)
+    item.in_circulation += 1
+    item.save()
 
     # Update stats
     user.total_spins += 1
+    if item.rarity == '???':
+        user.tq_unboxed += 1
+    if created:
+        user.items_found += 1
     user.save()
 
     # Create response 
-    circulationNum = 0
-    circulation = InventoryItem.objects.filter(item=obj.item)
-    for x in range(circulation.count()):
-        circulationNum += circulation[x].quantity
     response = {'SP': user.SP, 'degree': degree}
-    response['item'] = {'name': "{}".format(obj.item), 'rarity': 
-        obj.item.rarity, 'quantity': obj.quantity, 
-        'circulationNum': circulationNum}
+    response['item'] = {'name': "{}".format(item), 'rarity': 
+        item.rarity, 'quantity': obj.quantity, 
+        'circulationNum': item.in_circulation}
     return JsonResponse(response)
 
 def auto_log_in(request):
@@ -200,8 +204,33 @@ def fetch_profile(request):
                 algorithms=['HS256'])
     except:
         return JsonResponse({'fetchError': "Must be logged in..."}, status=401)
+    
+    # Find stats 
     user = User.objects.get(username=decoded['username'])
+    totalSpinItems = Item.objects.all().count()
+
+    # Find top 3 items according to lowest in_circulation,
+    # then rarity, then quantity, then lowest id (oldest)
+    list = []
+    result = []
+    inventoryItems = InventoryItem.objects.filter(user=user)
+    for x in range(inventoryItems.count()):
+        list.append([inventoryItems[x].item.in_circulation,
+            mapRarityToValue(inventoryItems[x].item.rarity),
+            inventoryItems[x].quantity, 
+            inventoryItems[x].id])
+    list = sorted(list, key=lambda el: (el[0], -el[1], -el[2], el[3]))[:3]
+    print(list)
+    for x in list:
+        invItem = InventoryItem.objects.get(id=x[3])
+        result.append({'name': invItem.item.name,
+        'rarity': invItem.item.rarity, 'quantity': invItem.quantity})
+
     response = {'username': decoded['username'], 'stats': {'SP': user.SP,
-            'totalSpins': user.total_spins}}
+            'totalSpins': user.total_spins, '???Unboxed': user.tq_unboxed, 
+            'itemsFound': user.items_found, 'totalSpinItems': totalSpinItems},
+            'showcaseItems': {'first': result[0], 'second': result[1], 
+            'third': result[2]}}
+
     return JsonResponse(response)
     
