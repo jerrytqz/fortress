@@ -29,3 +29,5 @@ def mapRarityToValue(rarity):
         return 6
     if (rarity == '???'):
         return 7
+
+rarities = ['Common', 'Uncommon', 'Rare', 'Epic', 'Holy', 'Godly', '???']

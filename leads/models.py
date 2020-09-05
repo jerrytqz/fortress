@@ -7,8 +7,14 @@ class User(models.Model):
     password = models.CharField(max_length=128)
     SP = models.IntegerField(default=0)
     total_spins = models.IntegerField(default=0)
-    tq_unboxed = models.IntegerField(default=0)
     items_found = models.IntegerField(default=0)
+    common_unboxed = models.IntegerField(default=0)
+    uncommon_unboxed = models.IntegerField(default=0)
+    rare_unboxed = models.IntegerField(default=0)
+    epic_unboxed = models.IntegerField(default=0)
+    holy_unboxed = models.IntegerField(default=0)
+    godly_unboxed = models.IntegerField(default=0)
+    tq_unboxed = models.IntegerField(default=0) 
 
     def __str__(self):
         return self.username 

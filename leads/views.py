@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from leads.models import User, BlacklistedJWT, InventoryItem, Item
 from django.contrib.auth.hashers import make_password, check_password 
 from spin_backend.settings import JWT_SECRET
-from leads.utility import mapDegreeToRarity, mapRarityToValue
+from leads.utility import mapDegreeToRarity, mapRarityToValue, rarities
 
 import jwt
 import random
@@ -28,9 +28,9 @@ def login(request):
             'authError': "Incorrect password"
         }, status=400) 
     encoded = jwt.encode(
-            {'username': user.username, 'exp': time.time()+3600}, 
-            JWT_SECRET, 
-            algorithm='HS256').decode('utf-8')
+        {'username': user.username, 'exp': time.time()+3600}, 
+        JWT_SECRET, 
+        algorithm='HS256').decode('utf-8')
     response = JsonResponse({
         'token': encoded 
     })
@@ -51,14 +51,14 @@ def register(request):
                 'authError': "Username is taken"
             }, status=400)
     user = User.objects.create(
-            username=request.POST.get('username'),
-            email=request.POST.get('email'),
-            password=make_password(request.POST.get('password')),
-            SP=0)
+        username=request.POST.get('username'),
+        email=request.POST.get('email'),
+        password=make_password(request.POST.get('password')),
+        SP=0)
     encoded = jwt.encode(
-            {'username': user.username, 'exp': time.time()+3600}, 
-            JWT_SECRET, 
-            algorithm='HS256').decode('utf-8')
+        {'username': user.username, 'exp': time.time()+3600}, 
+        JWT_SECRET, 
+        algorithm='HS256').decode('utf-8')
     return JsonResponse({
         'token': encoded
     })
@@ -70,12 +70,12 @@ def logout(request):
         }, status=400) 
     try:
         jwt.decode(request.headers.get('Authorization'), 
-                JWT_SECRET, 
-                algorithms=['HS256'])
+            JWT_SECRET, 
+            algorithms=['HS256'])
     except:
         return JsonResponse({
             'authError': """Log out error 
-                    (you are probably already logged out), try refreshing"""
+                (you are probably already logged out), try refreshing"""
         }, status=401)
     BlacklistedJWT.objects.create(jwt=request.headers.get('Authorization'))
     return JsonResponse({})
@@ -88,8 +88,8 @@ def fetch_sp(request):
             return JsonResponse({'fetchError': "LOG IN TO SPIN"}, status=401)
     try:
         decoded = jwt.decode(request.headers.get('Authorization'), 
-                JWT_SECRET, 
-                algorithms=['HS256'])
+            JWT_SECRET, 
+            algorithms=['HS256'])
     except:
         return JsonResponse({'fetchError': "LOG IN TO SPIN"}, status=401)
     user = User.objects.get(username=decoded['username'])
@@ -102,18 +102,18 @@ def purchase_spin(request):
         if request.headers.get('Authorization') == BJwt.jwt:
             return JsonResponse({
                 'purchaseError': """Log in error 
-                        (your session has probably expired), 
-                        try refreshing the page and logging back in"""
+                    (your session has probably expired), 
+                    try refreshing the page and logging back in"""
             }, status=401)
     try:
         decoded = jwt.decode(request.headers.get('Authorization'), 
-                JWT_SECRET, 
-                algorithms=['HS256'])
+            JWT_SECRET, 
+            algorithms=['HS256'])
     except:
         return JsonResponse({
             'purchaseError': """Log in error 
-                    (your session has probably expired), 
-                    try refreshing the page and logging back in"""
+                (your session has probably expired), 
+                try refreshing the page and logging back in"""
         }, status=401)
 
     # Subtract SP 
@@ -144,6 +144,8 @@ def purchase_spin(request):
     user.total_spins += 1
     if item.rarity == '???':
         user.tq_unboxed += 1
+    else: 
+        user.__dict__['{}_unboxed'.format(item.rarity).lower()] += 1
     if created:
         user.items_found += 1
     user.save()
@@ -163,8 +165,8 @@ def auto_log_in(request):
             return JsonResponse({}, status=401)
     try:
         jwt.decode(request.headers.get('Authorization'), 
-                JWT_SECRET, 
-                algorithms=['HS256'])
+            JWT_SECRET, 
+            algorithms=['HS256'])
     except:
         return JsonResponse({}, status=401)
     return JsonResponse({})
@@ -175,11 +177,11 @@ def fetch_inventory(request):
     for BJwt in BlacklistedJWT.objects.all():
         if request.headers.get('Authorization') == BJwt.jwt:
             return JsonResponse({'fetchError': "Must be logged in..."}, 
-                    status=401)
+                status=401)
     try:
         decoded = jwt.decode(request.headers.get('Authorization'), 
-                JWT_SECRET, 
-                algorithms=['HS256'])
+            JWT_SECRET, 
+            algorithms=['HS256'])
     except:
         return JsonResponse({'fetchError': "Must be logged in..."}, status=401)
     user = User.objects.get(username=decoded['username'])
@@ -197,11 +199,11 @@ def fetch_profile(request):
     for BJwt in BlacklistedJWT.objects.all():
         if request.headers.get('Authorization') == BJwt.jwt:
             return JsonResponse({'fetchError': "Must be logged in..."}, 
-                    status=401)
+                status=401)
     try:
         decoded = jwt.decode(request.headers.get('Authorization'), 
-                JWT_SECRET, 
-                algorithms=['HS256'])
+            JWT_SECRET, 
+            algorithms=['HS256'])
     except:
         return JsonResponse({'fetchError': "Must be logged in..."}, status=401)
     
@@ -216,17 +218,21 @@ def fetch_profile(request):
     for x in range(inventoryItems.count()):
         showcaseItems.append(inventoryItems[x])
     showcaseItems = sorted(showcaseItems, key=lambda el: 
-    (el.item.in_circulation, -mapRarityToValue(el.item.rarity), 
-    -el.quantity, el.id))[:3]
+        (el.item.in_circulation, -mapRarityToValue(el.item.rarity), 
+        -el.quantity, el.id))[:3]
     showcaseItems = list(map((lambda el: {'name': el.item.name, 
         'rarity': el.item.rarity, 'quantity': el.quantity}), showcaseItems))
 
     # Create response 
     response = {'username': decoded['username'], 'stats': {'SP': user.SP,
-            'totalSpins': user.total_spins, '???Unboxed': user.tq_unboxed, 
-            'itemsFound': user.items_found, 'totalSpinItems': totalSpinItems},
-            'showcaseItems': {'first': showcaseItems[0], 
-            'second': showcaseItems[1], 'third': showcaseItems[2]}}
+        'totalSpins': user.total_spins, 'itemsFound': user.items_found, 
+        'totalSpinItems': totalSpinItems, 'rarityStats': {}}, 
+        'showcaseItems': {'first': showcaseItems[0], 
+        'second': showcaseItems[1], 'third': showcaseItems[2]}}
+    for rarity in rarities[:-1]:
+        response['stats']['rarityStats'][rarity.lower()] = user.__dict__[
+            '{}_unboxed'.format(rarity.lower())]
+    response['stats']['rarityStats']['???'] = user.tq_unboxed
 
     return JsonResponse(response)
     
