@@ -5,6 +5,8 @@ from django.contrib.auth.hashers import make_password, check_password
 from spin_backend.settings import JWT_SECRET
 from leads.utility import mapDegreeToRarity, mapRarityToValue, rarities
 
+from num2words import num2words
+
 import jwt
 import random
 import string
@@ -222,13 +224,16 @@ def fetch_profile(request):
         -el.quantity, el.id))[:3]
     showcaseItems = list(map((lambda el: {'name': el.item.name, 
         'rarity': el.item.rarity, 'quantity': el.quantity}), showcaseItems))
+    while len(showcaseItems) < 3:
+        x = len(showcaseItems) 
+        showcaseItems.append("nothing")
 
     # Create response 
     response = {'username': decoded['username'], 'stats': {'SP': user.SP,
         'totalSpins': user.total_spins, 'itemsFound': user.items_found, 
-        'totalSpinItems': totalSpinItems, 'rarityStats': {}}, 
-        'showcaseItems': {'first': showcaseItems[0], 
-        'second': showcaseItems[1], 'third': showcaseItems[2]}}
+        'totalSpinItems': totalSpinItems, 'rarityStats': {}}, 'showcaseItems':
+        {'one': showcaseItems[0], 'two': showcaseItems[1], 
+        'three': showcaseItems[2]}}
     for rarity in rarities[:-1]:
         response['stats']['rarityStats'][rarity.lower()] = user.__dict__[
             '{}_unboxed'.format(rarity.lower())]
