@@ -3,14 +3,13 @@ from django.http import JsonResponse
 from leads.models import User, BlacklistedJWT, InventoryItem, Item
 from django.contrib.auth.hashers import make_password, check_password 
 from spin_backend.settings import JWT_SECRET
-from leads.utility import mapDegreeToRarity, mapRarityToValue, rarities
-
-from num2words import num2words
+from leads.utility import map_degree_to_rarity, map_rarity_to_value, sec_to_time
 
 import jwt
 import random
 import string
 import time
+import datetime
 
 # Create your views here.
 
@@ -79,6 +78,7 @@ def logout(request):
             'authError': """Log out error 
                 (you are probably already logged out), try refreshing"""
         }, status=401)
+
     BlacklistedJWT.objects.create(jwt=request.headers.get('Authorization'))
     return JsonResponse({})
 
@@ -94,6 +94,7 @@ def fetch_sp(request):
             algorithms=['HS256'])
     except:
         return JsonResponse({'fetchError': "LOG IN TO SPIN"}, status=401)
+    
     user = User.objects.get(username=decoded['username'])
     return JsonResponse({'SP': user.SP})
 
@@ -128,7 +129,7 @@ def purchase_spin(request):
     # Determine InventoryItem, add InventoryItem to inventory, and update
     # InventoryItem's Item's in_circulation 
     degree = random.random()*360
-    items = Item.objects.filter(rarity=mapDegreeToRarity(degree))
+    items = Item.objects.filter(rarity=map_degree_to_rarity(degree))
     index = random.randrange(items.count()) 
     obj, created = InventoryItem.objects.get_or_create(
         user=user,
@@ -171,6 +172,7 @@ def auto_log_in(request):
             algorithms=['HS256'])
     except:
         return JsonResponse({}, status=401)
+
     return JsonResponse({})
 
 def fetch_inventory(request):
@@ -186,6 +188,7 @@ def fetch_inventory(request):
             algorithms=['HS256'])
     except:
         return JsonResponse({'fetchError': "Must be logged in..."}, status=401)
+    
     user = User.objects.get(username=decoded['username'])
     response = {}
     filtered = InventoryItem.objects.filter(user=user)
@@ -220,7 +223,7 @@ def fetch_profile(request):
     for x in range(inventoryItems.count()):
         showcaseItems.append(inventoryItems[x])
     showcaseItems = sorted(showcaseItems, key=lambda el: 
-        (el.item.in_circulation, -mapRarityToValue(el.item.rarity), 
+        (el.item.in_circulation, -map_rarity_to_value(el.item.rarity), 
         -el.quantity, el.id))[:3]
     showcaseItems = list(map((lambda el: {'name': el.item.name, 
         'rarity': el.item.rarity, 'quantity': el.quantity}), showcaseItems))
@@ -239,4 +242,32 @@ def fetch_profile(request):
     response['stats']['rarityStats']['???'] = user.tq_unboxed
 
     return JsonResponse(response)
+
+def free_sp(request):
+    if request.method != 'GET':
+        return JsonResponse({'freeSPError': "Request type error"}, status=400)
+    for BJwt in BlacklistedJWT.objects.all():
+        if request.headers.get('Authorization') == BJwt.jwt:
+            return JsonResponse({'freeSPError': """Log in error 
+                    (your session has probably expired), 
+                    try refreshing the page and logging back in"""}, status=401)
+    try:
+        decoded = jwt.decode(request.headers.get('Authorization'), 
+            JWT_SECRET, 
+            algorithms=['HS256'])
+    except:
+        return JsonResponse({'freeSPError':  """Log in error 
+                    (your session has probably expired), 
+                    try refreshing the page and logging back in"""}, status=401)
+    
+    user = User.objects.get(username=decoded['username'])
+    if time.time() - user.last_free_sp_time >= 7200: 
+        user.SP = user.SP + 500
+        user.last_free_sp_time = time.time()
+        user.save()
+        return JsonResponse({'SP': user.SP})
+
+    timeLeft = str(sec_to_time(int(7200 
+        - (time.time() - user.last_free_sp_time))))
+    return JsonResponse({'freeSPError': timeLeft + " remaining"}, status=400)
     

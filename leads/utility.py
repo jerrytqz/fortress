@@ -1,4 +1,4 @@
-def mapDegreeToRarity(degree):
+def map_degree_to_rarity(degree):
     if 0 <= degree and degree < 187.2:
         return 'Common'
     if 187.2 <= degree and degree < 259.2:
@@ -14,7 +14,7 @@ def mapDegreeToRarity(degree):
     if 359.964 <= degree and degree < 360:
         return '???'
 
-def mapRarityToValue(rarity): 
+def map_rarity_to_value(rarity): 
     if (rarity == 'Common'): 
         return 1
     if (rarity == 'Uncommon'): 
@@ -29,5 +29,12 @@ def mapRarityToValue(rarity):
         return 6
     if (rarity == '???'):
         return 7
+
+def sec_to_time(seconds):
+    a = str(seconds//3600)
+    b = str((seconds%3600)//60)
+    c = str((seconds%3600)%60)
+    output = "{} hours {} minutes {} seconds".format(a, b, c)
+    return output
 
 rarities = ['Common', 'Uncommon', 'Rare', 'Epic', 'Holy', 'Godly', '???']
