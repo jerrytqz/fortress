@@ -3,7 +3,12 @@ from django.http import JsonResponse
 from leads.models import User, BlacklistedJWT, InventoryItem, Item
 from django.contrib.auth.hashers import make_password, check_password 
 from spin_backend.settings import JWT_SECRET
-from leads.utility import map_degree_to_rarity, map_rarity_to_value, sec_to_time
+from leads.utility import (
+    map_degree_to_rarity, 
+    map_rarity_to_value, 
+    sec_to_time, 
+    rarities
+)
 
 import jwt
 import random
@@ -55,7 +60,7 @@ def register(request):
         username=request.POST.get('username'),
         email=request.POST.get('email'),
         password=make_password(request.POST.get('password')),
-        SP=0)
+        sp=0)
     encoded = jwt.encode(
         {'username': user.username, 'exp': time.time()+3600}, 
         JWT_SECRET, 
@@ -96,7 +101,7 @@ def fetch_sp(request):
         return JsonResponse({'fetchError': "LOG IN TO SPIN"}, status=401)
     
     user = User.objects.get(username=decoded['username'])
-    return JsonResponse({'SP': user.SP})
+    return JsonResponse({'SP': user.sp})
 
 def purchase_spin(request):
     if request.method != 'POST':
@@ -121,9 +126,9 @@ def purchase_spin(request):
 
     # Subtract SP 
     user = User.objects.get(username=decoded['username'])
-    if user.SP - 500 < 0:
+    if user.sp - 500 < 0:
         return JsonResponse({'purchaseError': "Not enough SP"}, status=400)
-    user.SP = user.SP - 500
+    user.sp = user.sp - 500
     user.save()
     
     # Determine InventoryItem, add InventoryItem to inventory, and update
@@ -154,7 +159,7 @@ def purchase_spin(request):
     user.save()
 
     # Create response 
-    response = {'SP': user.SP, 'degree': degree}
+    response = {'SP': user.sp, 'degree': degree}
     response['item'] = {'name': "{}".format(item), 'rarity': 
         item.rarity, 'quantity': obj.quantity, 
         'circulationNum': item.in_circulation}
@@ -231,11 +236,11 @@ def fetch_profile(request):
         showcaseItems.append("nothing")
 
     # Create response 
-    response = {'username': decoded['username'], 'stats': {'SP': user.SP,
-        'totalSpins': user.total_spins, 'itemsFound': user.items_found, 
-        'totalSpinItems': totalSpinItems, 'rarityStats': {}}, 'showcaseItems':
-        {'one': showcaseItems[0], 'two': showcaseItems[1], 
-        'three': showcaseItems[2]}}
+    response = {'username': decoded['username'], 'stats': {'SP': user.sp,
+        'netSP': user.net_sp, 'totalSpins': user.total_spins, 
+        'itemsFound': user.items_found, 'totalSpinItems': totalSpinItems, 
+        'rarityStats': {}}, 'showcaseItems': {'one': showcaseItems[0], 
+        'two': showcaseItems[1], 'three': showcaseItems[2]}}
     for rarity in rarities[:-1]:
         response['stats']['rarityStats'][rarity.lower()] = user.__dict__[
             '{}_unboxed'.format(rarity.lower())]
@@ -262,12 +267,15 @@ def free_sp(request):
     
     user = User.objects.get(username=decoded['username'])
     if time.time() - user.last_free_sp_time >= 7200: 
-        user.SP = user.SP + 500
+        freeSPAmount = random.randint(250, 750)
+        user.sp = user.sp + freeSPAmount
+        user.net_sp = user.net_sp + freeSPAmount 
         user.last_free_sp_time = time.time()
         user.save()
-        return JsonResponse({'SP': user.SP})
+        return JsonResponse({'SP': user.sp})
 
     timeLeft = str(sec_to_time(int(7200 
         - (time.time() - user.last_free_sp_time))))
-    return JsonResponse({'freeSPError': timeLeft + " remaining"}, status=400)
+    return JsonResponse({'freeSPError': "Next free SP in " + timeLeft}, 
+        status=400)
     

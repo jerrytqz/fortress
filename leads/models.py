@@ -7,7 +7,8 @@ class User(models.Model):
     password = models.CharField(max_length=128)
     last_free_sp_time = models.FloatField(default=0)
 
-    SP = models.IntegerField(default=0)
+    sp = models.IntegerField(default=0)
+    net_sp = models.IntegerField(default=0)
     total_spins = models.IntegerField(default=0)
     items_found = models.IntegerField(default=0)
     common_unboxed = models.IntegerField(default=0)

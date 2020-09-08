@@ -31,10 +31,25 @@ def map_rarity_to_value(rarity):
         return 7
 
 def sec_to_time(seconds):
-    a = str(seconds//3600)
-    b = str((seconds%3600)//60)
-    c = str((seconds%3600)%60)
-    output = "{} hours {} minutes {} seconds".format(a, b, c)
+    a = seconds//3600
+    b = (seconds%3600)//60
+    c = (seconds%3600)%60
+
+    d = ''
+    e = ''
+    f = ''
+
+    if a == 0 or a > 1:
+        d = 's'
+
+    if b == 0 or b > 1:
+        e = 's'
+
+    if c == 0 or c > 1:
+        f = 's'
+
+    output = "{} hour{} {} minute{} {} second{}".format(
+        str(a), d, str(b), e, str(c), f)
     return output
 
 rarities = ['Common', 'Uncommon', 'Rare', 'Epic', 'Holy', 'Godly', '???']
