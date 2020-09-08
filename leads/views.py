@@ -225,7 +225,6 @@ def fetch_profile(request):
     showcaseItems = list(map((lambda el: {'name': el.item.name, 
         'rarity': el.item.rarity, 'quantity': el.quantity}), showcaseItems))
     while len(showcaseItems) < 3:
-        x = len(showcaseItems) 
         showcaseItems.append("nothing")
 
     # Create response 
