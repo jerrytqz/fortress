@@ -31,6 +31,7 @@ class BlacklistedJWT(models.Model):
 class Item(models.Model): 
     name = models.CharField(max_length=32, unique=True)
     rarity = models.CharField(max_length=16)
+    description = models.CharField(max_length=128, default="")
     in_circulation = models.IntegerField(default=0)
 
     def __str__(self):

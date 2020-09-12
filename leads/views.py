@@ -161,8 +161,8 @@ def purchase_spin(request):
     # Create response 
     response = {'SP': user.sp, 'degree': degree}
     response['item'] = {'name': "{}".format(item), 'rarity': 
-        item.rarity, 'quantity': obj.quantity, 
-        'circulationNum': item.in_circulation}
+        item.rarity, 'description': item.description, 
+        'circulationNum': item.in_circulation, 'quantity': obj.quantity}
     return JsonResponse(response)
 
 def auto_log_in(request):
@@ -221,14 +221,14 @@ def fetch_profile(request):
     user = User.objects.get(username=decoded['username'])
     totalSpinItems = Item.objects.all().count()
 
-    # Find top 3 items according to lowest in_circulation,
-    # then rarity, then quantity, then lowest id (oldest)
+    # Find top 3 items according to rarity,
+    # then lowest in_circulation, then quantity, then lowest id (oldest)
     showcaseItems = []
     inventoryItems = InventoryItem.objects.filter(user=user)
     for x in range(inventoryItems.count()):
         showcaseItems.append(inventoryItems[x])
     showcaseItems = sorted(showcaseItems, key=lambda el: 
-        (el.item.in_circulation, -map_rarity_to_value(el.item.rarity), 
+        (-map_rarity_to_value(el.item.rarity), el.item.in_circulation,
         -el.quantity, el.id))[:3]
     showcaseItems = list(map((lambda el: {'name': el.item.name, 
         'rarity': el.item.rarity, 'quantity': el.quantity}), showcaseItems))
@@ -267,7 +267,7 @@ def free_sp(request):
     
     user = User.objects.get(username=decoded['username'])
     if time.time() - user.last_free_sp_time >= 7200: 
-        freeSPAmount = random.randint(250, 750)
+        freeSPAmount = random.randint(500, 750)
         user.sp = user.sp + freeSPAmount
         user.net_sp = user.net_sp + freeSPAmount 
         user.last_free_sp_time = time.time()
