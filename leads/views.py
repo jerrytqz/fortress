@@ -267,7 +267,7 @@ def free_sp(request):
     
     user = User.objects.get(username=decoded['username'])
     if time.time() - user.last_free_sp_time >= 7200: 
-        freeSPAmount = random.randint(500, 750)
+        freeSPAmount = random.randint(1500, 3000)
         user.sp = user.sp + freeSPAmount
         user.net_sp = user.net_sp + freeSPAmount 
         user.last_free_sp_time = time.time()
