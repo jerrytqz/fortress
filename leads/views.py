@@ -329,3 +329,15 @@ def list_item(request):
         price=int(request.POST.get('price')))
 
     return JsonResponse({})
+
+def fetch_market(request):
+    if request.method != 'GET':
+        return JsonResponse({'fetchError': "Request error"}, status=400)
+
+    response = {}
+    marketItems = MarketItem.objects.all()
+    for x in range(marketItems.count()):
+        response['{}|{}'.format(marketItems[x].item, marketItems[x].id)] = {
+        'seller': marketItems[x].user.username, 'rarity': 
+        marketItems[x].item.rarity, 'price': marketItems[x].price}
+    return JsonResponse(response)
