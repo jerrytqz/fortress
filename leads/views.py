@@ -15,6 +15,7 @@ import random
 import string
 import time
 import datetime
+import math
 
 # Create your views here.
 
@@ -301,8 +302,12 @@ def list_item(request):
         return JsonResponse({
             'listError': "Invalid price"
         }, status=400)
-
+    
     user = User.objects.get(username=decoded['username'])
+
+    if user.sp - math.floor(int(request.POST.get('price'))/20) < 0:
+        return JsonResponse({'listError': "Not enough SP"}, 
+            status=400)
     
     try: 
         inventoryItem = InventoryItem.objects.get(user=user.id,
@@ -310,6 +315,9 @@ def list_item(request):
     except: 
         return JsonResponse({'listError': "You don't have that item"}, 
             status=400)
+
+    user.sp -= math.floor(int(request.POST.get('price'))/20)
+    user.save()
     
     if inventoryItem.quantity > 1: 
         inventoryItem.quantity -= 1
