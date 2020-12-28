@@ -23,7 +23,6 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('logout/', views.logout, name='logout'),
     path('purchase-spin/', views.purchase_spin, name='purchase_spin'),
-    path('fetch-sp/', views.fetch_sp, name='set_sp'),
     path('auto-log-in/', views.auto_log_in, name='auto_log_in'),
     path('fetch-inventory/', views.fetch_inventory, name='fetch_inventory'),
     path('fetch-profile/', views.fetch_profile, name='fetch_profile'),

@@ -55,6 +55,7 @@ class MarketItem(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     price = models.IntegerField(default=0)
+    listTime = models.IntegerField(default=0)
 
     def __str__(self):
         return self.user.username + ' | ' + self.item.name + ' | ' + str(

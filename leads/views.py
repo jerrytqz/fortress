@@ -42,6 +42,7 @@ def login(request):
     response = JsonResponse({
         'token': encoded,
         'user': user.username,
+        'SP': user.sp, 
         'expirationTime': expirationTime
     })
     return response 
@@ -73,6 +74,7 @@ def register(request):
     return JsonResponse({
         'token': encoded,
         'user': user.username,
+        'SP': user.sp,
         'expirationTime': expirationTime
     })
 
@@ -92,22 +94,6 @@ def logout(request):
 
     BlacklistedJWT.objects.create(jwt=request.headers.get('Authorization'))
     return JsonResponse({})
-
-def fetch_sp(request):
-    if request.method != 'GET':
-        return JsonResponse({'fetchError': "REQUEST ERROR"}, status=400)
-    for BJwt in BlacklistedJWT.objects.all():
-        if request.headers.get('Authorization') == BJwt.jwt:
-            return JsonResponse({'fetchError': "LOG IN TO SPIN"}, status=401)
-    try:
-        decoded = jwt.decode(request.headers.get('Authorization'), 
-            JWT_SECRET, 
-            algorithms=['HS256'])
-    except:
-        return JsonResponse({'fetchError': "LOG IN TO SPIN"}, status=401)
-    
-    user = User.objects.get(username=decoded['username'])
-    return JsonResponse({'SP': user.sp})
 
 def purchase_spin(request):
     if request.method != 'POST':
@@ -161,10 +147,14 @@ def purchase_spin(request):
     user.save()
 
     # Create response 
-    response = {'SP': user.sp, 'degree': degree}
-    response['item'] = {'name': "{}".format(item), 'rarity': 
-        item.rarity, 'description': item.description, 
-        'circulationNum': item.in_circulation, 'quantity': obj.quantity}
+    response = {'degree': degree}
+    response['item'] = {
+        'name': "{}".format(item), 
+        'rarity': item.rarity, 
+        'description': item.description, 
+        'circulationNum': item.in_circulation, 
+        'quantity': obj.quantity
+    }
     return JsonResponse(response)
 
 def auto_log_in(request):
@@ -179,7 +169,13 @@ def auto_log_in(request):
             algorithms=['HS256'])
     except:
         return JsonResponse({}, status=401)
-    return JsonResponse({'expirationDate': int(decoded['exp'] * 1000)})
+
+    user = User.objects.get(username=decoded['username'])
+    
+    return JsonResponse({
+        'expirationDate': int(decoded['exp'] * 1000),
+        'SP': user.sp
+        })
 
 def fetch_inventory(request):
     if request.method != 'GET':
@@ -199,9 +195,12 @@ def fetch_inventory(request):
     response = {}
     filtered = InventoryItem.objects.filter(user=user)
     for x in range(filtered.count()):
-        response['{}'.format(filtered[x].item)] = {'quantity': 
-        filtered[x].quantity, 'rarity': filtered[x].item.rarity, 'inventoryID': 
-        filtered[x].id, 'itemID': filtered[x].item.id}
+        response['{}'.format(filtered[x].item)] = {
+            'quantity': filtered[x].quantity, 
+            'rarity': filtered[x].item.rarity, 
+            'inventoryID': filtered[x].id, 
+            'itemID': filtered[x].item.id
+        }
     return JsonResponse(response)
     
 def fetch_profile(request):
@@ -231,11 +230,22 @@ def fetch_profile(request):
         showcaseItems.append("nothing")
 
     # Create response 
-    response = {'username': username, 'stats': {'SP': user.sp,
-        'netSP': user.net_sp, 'totalSpins': user.total_spins, 
-        'itemsFound': user.items_found, 'totalSpinItems': totalSpinItems, 
-        'rarityStats': {}}, 'showcaseItems': {'one': showcaseItems[0], 
-        'two': showcaseItems[1], 'three': showcaseItems[2]}}
+    response = {
+        'username': username, 
+        'stats': {
+            'SP': user.sp,
+            'netSP': user.net_sp, 
+            'totalSpins': user.total_spins, 
+            'itemsFound': user.items_found, 
+            'totalSpinItems': totalSpinItems, 
+            'rarityStats': {}
+        }, 
+        'showcaseItems': {
+            'one': showcaseItems[0], 
+            'two': showcaseItems[1], 
+            'three': showcaseItems[2]
+        }
+    }
     for rarity in rarities[:-1]:
         response['stats']['rarityStats'][rarity.lower()] = user.__dict__[
             '{}_unboxed'.format(rarity.lower())]
@@ -267,7 +277,7 @@ def free_sp(request):
         user.net_sp = user.net_sp + freeSPAmount 
         user.last_free_sp_time = time.time()
         user.save()
-        return JsonResponse({'SP': user.sp})
+        return JsonResponse({'freeSP': user.sp})
 
     timeLeft = str(sec_to_time(int(7200 
         - (time.time() - user.last_free_sp_time))))
@@ -326,7 +336,7 @@ def list_item(request):
         inventoryItem.delete()
 
     MarketItem.objects.create(user=user, item=inventoryItem.item, 
-        price=int(request.POST.get('price')))
+        price=int(request.POST.get('price')), listTime=time.time())
 
     return JsonResponse({})
 
@@ -338,6 +348,9 @@ def fetch_market(request):
     marketItems = MarketItem.objects.all()
     for x in range(marketItems.count()):
         response['{}|{}'.format(marketItems[x].item, marketItems[x].id)] = {
-        'seller': marketItems[x].user.username, 'rarity': 
-        marketItems[x].item.rarity, 'price': marketItems[x].price}
+        'seller': marketItems[x].user.username, 
+        'rarity': marketItems[x].item.rarity, 
+        'price': marketItems[x].price,
+        'listTime': marketItems[x].listTime
+    }
     return JsonResponse(response)
