@@ -1,5 +1,5 @@
 from django.contrib import admin
-from leads.models import User, BlacklistedJWT, Item, InventoryItem
+from leads.models import User, BlacklistedJWT, Item, InventoryItem, MarketItem
 
 def update_circulation(modeladmin, request, queryset): 
     for x in range(queryset.count()):
@@ -20,3 +20,4 @@ admin.site.register(User)
 admin.site.register(BlacklistedJWT)
 admin.site.register(Item, ItemAdmin)
 admin.site.register(InventoryItem)
+admin.site.register(MarketItem)

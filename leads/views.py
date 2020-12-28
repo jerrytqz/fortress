@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from leads.models import User, BlacklistedJWT, InventoryItem, Item
+from leads.models import User, BlacklistedJWT, InventoryItem, Item, MarketItem
 from django.contrib.auth.hashers import make_password, check_password 
 from spin_backend.settings import JWT_SECRET
 from leads.utility import (
@@ -199,8 +199,8 @@ def fetch_inventory(request):
     filtered = InventoryItem.objects.filter(user=user)
     for x in range(filtered.count()):
         response['{}'.format(filtered[x].item)] = {'quantity': 
-        filtered[x].quantity, 'rarity': filtered[x].item.rarity, 'id': 
-        filtered[x].id}
+        filtered[x].quantity, 'rarity': filtered[x].item.rarity, 'inventoryID': 
+        filtered[x].id, 'itemID': filtered[x].item.id}
     return JsonResponse(response)
     
 def fetch_profile(request):
@@ -272,4 +272,52 @@ def free_sp(request):
         - (time.time() - user.last_free_sp_time))))
     return JsonResponse({'freeSPError': "Next free SP in " + timeLeft}, 
         status=400)
+
+def list_item(request):
+    if request.method != 'POST':
+        return JsonResponse({'listError': "Request error"}, status=400)
+    for BJwt in BlacklistedJWT.objects.all():
+        if request.headers.get('Authorization') == BJwt.jwt:
+            return JsonResponse({
+                'listError': "Authentication error"
+            }, status=401)
+    try:
+        decoded = jwt.decode(request.headers.get('Authorization'), 
+            JWT_SECRET, 
+            algorithms=['HS256'])
+    except:
+        return JsonResponse({
+            'listError': "Authentication error"
+        }, status=401)
+
+    try: 
+        numPrice = int(request.POST.get('price'))
+    except: 
+        return JsonResponse({
+            'listError': "Invalid price"
+        }, status=400)
     
+    if numPrice < 1 or numPrice > 10000000: 
+        return JsonResponse({
+            'listError': "Invalid price"
+        }, status=400)
+
+    user = User.objects.get(username=decoded['username'])
+    
+    try: 
+        inventoryItem = InventoryItem.objects.get(user=user.id,
+            item=request.POST.get('itemID'))
+    except: 
+        return JsonResponse({'listError': "You don't have that item"}, 
+            status=400)
+    
+    if inventoryItem.quantity > 1: 
+        inventoryItem.quantity -= 1
+        inventoryItem.save()
+    else:
+        inventoryItem.delete()
+
+    MarketItem.objects.create(user=user, item=inventoryItem.item, 
+        price=int(request.POST.get('price')))
+
+    return JsonResponse({})
