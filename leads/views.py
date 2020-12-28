@@ -21,7 +21,7 @@ import datetime
 def login(request):
     if request.method != 'POST':
         return JsonResponse({
-            'authError': "Request type error"
+            'authError': "Request error"
         }, status=400)
     try: 
         user = User.objects.get(username=request.POST.get('username'))
@@ -33,19 +33,22 @@ def login(request):
         return JsonResponse({
             'authError': "Incorrect password"
         }, status=400) 
+    expirationTime = 3600
     encoded = jwt.encode(
-        {'username': user.username, 'exp': time.time()+3600}, 
+        {'username': user.username, 'exp': time.time() + expirationTime}, 
         JWT_SECRET, 
         algorithm='HS256').decode('utf-8')
     response = JsonResponse({
-        'token': encoded 
+        'token': encoded,
+        'user': user.username,
+        'expirationTime': expirationTime
     })
     return response 
 
 def register(request):
     if request.method != 'POST':
         return JsonResponse({
-            'authError': "Request type error"
+            'authError': "Request error"
         }, status=400) 
     if not request.POST.get('password') == request.POST.get('confirmPassword'):
         return JsonResponse({
@@ -61,18 +64,21 @@ def register(request):
         email=request.POST.get('email'),
         password=make_password(request.POST.get('password')),
         sp=0)
+    expirationTime = 3600
     encoded = jwt.encode(
-        {'username': user.username, 'exp': time.time()+3600}, 
+        {'username': user.username, 'exp': time.time() + expirationTime}, 
         JWT_SECRET, 
         algorithm='HS256').decode('utf-8')
     return JsonResponse({
-        'token': encoded
+        'token': encoded,
+        'user': user.username,
+        'expirationTime': expirationTime
     })
 
 def logout(request):
     if request.method != 'POST':
         return JsonResponse({
-            'authError': "Request type error"
+            'authError': "Request error"
         }, status=400) 
     try:
         jwt.decode(request.headers.get('Authorization'), 
@@ -80,8 +86,7 @@ def logout(request):
             algorithms=['HS256'])
     except:
         return JsonResponse({
-            'authError': """Log out error 
-                (you are probably already logged out), try refreshing"""
+            'authError': "Log out error" 
         }, status=401)
 
     BlacklistedJWT.objects.create(jwt=request.headers.get('Authorization'))
@@ -89,7 +94,7 @@ def logout(request):
 
 def fetch_sp(request):
     if request.method != 'GET':
-        return JsonResponse({'fetchError': "REQUEST TYPE ERROR"}, status=400)
+        return JsonResponse({'fetchError': "REQUEST ERROR"}, status=400)
     for BJwt in BlacklistedJWT.objects.all():
         if request.headers.get('Authorization') == BJwt.jwt:
             return JsonResponse({'fetchError': "LOG IN TO SPIN"}, status=401)
@@ -105,13 +110,11 @@ def fetch_sp(request):
 
 def purchase_spin(request):
     if request.method != 'POST':
-        return JsonResponse({'purchaseError': "Request type error"}, status=400)
+        return JsonResponse({'purchaseError': "Request error"}, status=400)
     for BJwt in BlacklistedJWT.objects.all():
         if request.headers.get('Authorization') == BJwt.jwt:
             return JsonResponse({
-                'purchaseError': """Log in error 
-                    (your session has probably expired), 
-                    try refreshing the page and logging back in"""
+                'purchaseError': "Authentication error"
             }, status=401)
     try:
         decoded = jwt.decode(request.headers.get('Authorization'), 
@@ -119,9 +122,7 @@ def purchase_spin(request):
             algorithms=['HS256'])
     except:
         return JsonResponse({
-            'purchaseError': """Log in error 
-                (your session has probably expired), 
-                try refreshing the page and logging back in"""
+            'purchaseError': "Authentication error"
         }, status=401)
 
     # Subtract SP 
@@ -167,22 +168,21 @@ def purchase_spin(request):
 
 def auto_log_in(request):
     if request.method != 'POST':
-        return JsonResponse({'error': "Request type error"}, status=400)
+        return JsonResponse({'error': "Request error"}, status=400)
     for BJwt in BlacklistedJWT.objects.all():
         if request.headers.get('Authorization') == BJwt.jwt:
             return JsonResponse({}, status=401)
     try:
-        jwt.decode(request.headers.get('Authorization'), 
+        decoded = jwt.decode(request.headers.get('Authorization'), 
             JWT_SECRET, 
             algorithms=['HS256'])
     except:
         return JsonResponse({}, status=401)
-
-    return JsonResponse({})
+    return JsonResponse({'expirationDate': int(decoded['exp'] * 1000)})
 
 def fetch_inventory(request):
     if request.method != 'GET':
-        return JsonResponse({'fetchError': "Request type error"}, status=400)
+        return JsonResponse({'fetchError': "Request error"}, status=400)
     for BJwt in BlacklistedJWT.objects.all():
         if request.headers.get('Authorization') == BJwt.jwt:
             return JsonResponse({'fetchError': "Must be logged in..."}, 
@@ -204,21 +204,15 @@ def fetch_inventory(request):
     return JsonResponse(response)
     
 def fetch_profile(request):
-    if request.method != 'GET':
-        return JsonResponse({'fetchError': "Request type error"}, status=400)
-    for BJwt in BlacklistedJWT.objects.all():
-        if request.headers.get('Authorization') == BJwt.jwt:
-            return JsonResponse({'fetchError': "Must be logged in..."}, 
-                status=401)
-    try:
-        decoded = jwt.decode(request.headers.get('Authorization'), 
-            JWT_SECRET, 
-            algorithms=['HS256'])
-    except:
-        return JsonResponse({'fetchError': "Must be logged in..."}, status=401)
-    
+    if request.method != 'POST':
+        return JsonResponse({'fetchError': "Request error"}, status=400)
+
+    username = request.POST.get('username')
+    if len(User.objects.filter(username=username)) != 1: 
+        return JsonResponse({'fetchError': "No such user..."}, status=400)
+
     # Find stats 
-    user = User.objects.get(username=decoded['username'])
+    user = User.objects.get(username=username)
     totalSpinItems = Item.objects.all().count()
 
     # Find top 3 items according to rarity,
@@ -236,7 +230,7 @@ def fetch_profile(request):
         showcaseItems.append("nothing")
 
     # Create response 
-    response = {'username': decoded['username'], 'stats': {'SP': user.sp,
+    response = {'username': username, 'stats': {'SP': user.sp,
         'netSP': user.net_sp, 'totalSpins': user.total_spins, 
         'itemsFound': user.items_found, 'totalSpinItems': totalSpinItems, 
         'rarityStats': {}}, 'showcaseItems': {'one': showcaseItems[0], 
@@ -250,20 +244,20 @@ def fetch_profile(request):
 
 def free_sp(request):
     if request.method != 'GET':
-        return JsonResponse({'freeSPError': "Request type error"}, status=400)
+        return JsonResponse({'freeSPError': "Request error"}, status=400)
     for BJwt in BlacklistedJWT.objects.all():
         if request.headers.get('Authorization') == BJwt.jwt:
-            return JsonResponse({'freeSPError': """Log in error 
-                    (your session has probably expired), 
-                    try refreshing the page and logging back in"""}, status=401)
+            return JsonResponse({
+                'freeSPError': "Authentication error"
+            }, status=401)
     try:
         decoded = jwt.decode(request.headers.get('Authorization'), 
             JWT_SECRET, 
             algorithms=['HS256'])
     except:
-        return JsonResponse({'freeSPError':  """Log in error 
-                    (your session has probably expired), 
-                    try refreshing the page and logging back in"""}, status=401)
+        return JsonResponse({
+            'freeSPError': "Authentication error"
+        }, status=401)
     
     user = User.objects.get(username=decoded['username'])
     if time.time() - user.last_free_sp_time >= 7200: 
