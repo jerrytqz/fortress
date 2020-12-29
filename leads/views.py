@@ -116,7 +116,7 @@ def purchase_spin(request):
     user = User.objects.get(username=decoded['username'])
     if user.sp - 500 < 0:
         return JsonResponse({'purchaseError': "Not enough SP"}, status=400)
-    user.sp = user.sp - 500
+    user.sp -= 500;
     user.save()
     
     # Determine InventoryItem, add InventoryItem to inventory, and update
@@ -277,7 +277,7 @@ def free_sp(request):
         user.net_sp = user.net_sp + freeSPAmount 
         user.last_free_sp_time = time.time()
         user.save()
-        return JsonResponse({'freeSP': user.sp})
+        return JsonResponse({'freeSP': freeSPAmount})
 
     timeLeft = str(sec_to_time(int(7200 
         - (time.time() - user.last_free_sp_time))))
@@ -337,7 +337,7 @@ def list_item(request):
 
     MarketItem.objects.create(user=user, item=inventoryItem.item, 
         price=int(request.POST.get('price')), listTime=time.time())
-
+    
     return JsonResponse({})
 
 def fetch_market(request):
@@ -351,6 +351,72 @@ def fetch_market(request):
         'seller': marketItems[x].user.username, 
         'rarity': marketItems[x].item.rarity, 
         'price': marketItems[x].price,
-        'listTime': marketItems[x].listTime
+        'listTime': int(marketItems[x].listTime * 1000)
     }
     return JsonResponse(response)
+
+def buy_item(request):
+    if request.method != 'POST':
+        return JsonResponse({'buyError': "Request error"}, status=400)
+    for BJwt in BlacklistedJWT.objects.all():
+        if request.headers.get('Authorization') == BJwt.jwt:
+            return JsonResponse({
+                'buyError': "Authentication error"
+            }, status=401)
+    try:
+        decoded = jwt.decode(request.headers.get('Authorization'), 
+            JWT_SECRET, 
+            algorithms=['HS256'])
+    except:
+        return JsonResponse({
+            'buyError': "Authentication error"
+        }, status=401)
+    
+    user = User.objects.get(username=decoded['username'])
+
+    try: 
+        marketItem = MarketItem.objects.get(id=request.POST.get('marketID'))
+    except: 
+        return JsonResponse({
+            'buyError': "Item already bought"
+        }, status=400)
+
+    if user.sp < marketItem.price:
+        return JsonResponse({
+            'buyError': "Not enough SP"
+        }, status=400)
+    
+    if user == marketItem.user: 
+        return JsonResponse({
+            'buyError': "Cannot buy own item"
+        }, status=400)
+
+    user.sp -= marketItem.price 
+    user.save()
+    
+    inventoryItem, created = InventoryItem.objects.get_or_create(
+        user=user,
+        item=marketItem.item,
+        defaults={'quantity': 1}
+    )
+    if not created:
+        inventoryItem.quantity += 1
+        inventoryItem.save()
+    else:
+        marketItems = MarketItem.objects.filter(
+            user=user, 
+            item=marketItem.item
+        )
+        print(marketItems.count())
+        if (marketItems.count() == 0):
+            user.items_found += 1
+            user.save()
+
+    seller = marketItem.user
+    seller.sp += marketItem.price
+    seller.net_sp += marketItem.price 
+    seller.save()
+
+    marketItem.delete()
+
+    return JsonResponse({})
