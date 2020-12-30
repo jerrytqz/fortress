@@ -1,15 +1,3 @@
-from django.shortcuts import render
-from django.http import JsonResponse
-from leads.models import User, BlacklistedJWT, InventoryItem, Item, MarketItem
-from django.contrib.auth.hashers import make_password, check_password 
-from spin_backend.settings import JWT_SECRET
-from leads.utility import (
-    map_degree_to_rarity, 
-    map_rarity_to_value, 
-    sec_to_time, 
-    rarities
-)
-
 import jwt
 import random
 import string
@@ -17,60 +5,73 @@ import time
 import datetime
 import math
 
+from django.shortcuts import render
+from django.http import JsonResponse
+from leads.models import User, BlacklistedJWT, InventoryItem, Item, MarketItem
+from django.contrib.auth.hashers import make_password, check_password 
+from spin_backend.settings import JWT_SECRET
+from leads.utility import (
+    rarities,
+    map_degree_to_rarity, 
+    map_rarity_to_value, 
+    authenticate
+)
+
 # Create your views here.
 
 def login(request):
     if request.method != 'POST':
-        return JsonResponse({
-            'authError': "Request error"
-        }, status=400)
+        return JsonResponse({'authError': "Request error"}, status=400)
+
     try: 
         user = User.objects.get(username=request.POST.get('username'))
     except:
         return JsonResponse({
             'authError': "User could not be found"
         }, status=400)
+    
     if not check_password(request.POST.get('password'), user.password):
-        return JsonResponse({
-            'authError': "Incorrect password"
-        }, status=400) 
+        return JsonResponse({'authError': "Incorrect password"}, status=400) 
+    
     expirationTime = 3600
     encoded = jwt.encode(
         {'username': user.username, 'exp': time.time() + expirationTime}, 
         JWT_SECRET, 
-        algorithm='HS256').decode('utf-8')
+        algorithm='HS256'
+    ).decode('utf-8')
     response = JsonResponse({
         'token': encoded,
         'user': user.username,
         'SP': user.sp, 
         'expirationTime': expirationTime
     })
+
     return response 
 
 def register(request):
     if request.method != 'POST':
-        return JsonResponse({
-            'authError': "Request error"
-        }, status=400) 
+        return JsonResponse({'authError': "Request error"}, status=400) 
+    
     if not request.POST.get('password') == request.POST.get('confirmPassword'):
-        return JsonResponse({
-            'authError': "Passwords do not match"
-        }, status=400)
+        return JsonResponse({'authError': "Passwords do not match"}, status=400)
+    
     for user in User.objects.all():
         if request.POST.get('username') == user.username:
-            return JsonResponse({
-                'authError': "Username is taken"
-            }, status=400)
+            return JsonResponse({'authError': "Username is taken"}, status=400)
+    
     user = User.objects.create(
         username=request.POST.get('username'),
         email=request.POST.get('email'),
         password=make_password(request.POST.get('password')),
-        sp=0)
+        sp=0
+    
+    )
     expirationTime = 3600
     encoded = jwt.encode(
         {'username': user.username, 'exp': time.time() + expirationTime}, 
         JWT_SECRET, 
         algorithm='HS256').decode('utf-8')
+    
     return JsonResponse({
         'token': encoded,
         'user': user.username,
@@ -80,48 +81,46 @@ def register(request):
 
 def logout(request):
     if request.method != 'POST':
-        return JsonResponse({
-            'authError': "Request error"
-        }, status=400) 
+        return JsonResponse({'authError': "Request error"}, status=400) 
+    
     try:
-        jwt.decode(request.headers.get('Authorization'), 
+        jwt.decode(
+            request.headers.get('Authorization'), 
             JWT_SECRET, 
-            algorithms=['HS256'])
+            algorithms=['HS256']
+        )
     except:
-        return JsonResponse({
-            'authError': "Log out error" 
-        }, status=401)
+        return JsonResponse({'authError': "Log out error"}, status=401)
 
     BlacklistedJWT.objects.create(jwt=request.headers.get('Authorization'))
+    
     return JsonResponse({})
 
 def purchase_spin(request):
     if request.method != 'POST':
         return JsonResponse({'purchaseError': "Request error"}, status=400)
-    for BJwt in BlacklistedJWT.objects.all():
-        if request.headers.get('Authorization') == BJwt.jwt:
-            return JsonResponse({
-                'purchaseError': "Authentication error"
-            }, status=401)
-    try:
-        decoded = jwt.decode(request.headers.get('Authorization'), 
-            JWT_SECRET, 
-            algorithms=['HS256'])
-    except:
-        return JsonResponse({
-            'purchaseError': "Authentication error"
-        }, status=401)
+
+    authentication = authenticate(
+        request, 
+        'purchaseError', 
+        "Authentication error"
+    )
+    if not authentication[0]: 
+        return authentication[1]
+    decoded = authentication[1] 
 
     # Subtract SP 
     user = User.objects.get(username=decoded['username'])
     if user.sp - 500 < 0:
         return JsonResponse({'purchaseError': "Not enough SP"}, status=400)
-    user.sp -= 500;
+    user.sp -= 500
     user.save()
     
-    # Determine InventoryItem, add InventoryItem to inventory, and update
-    # InventoryItem's Item's in_circulation 
-    degree = random.random()*360
+    '''
+    Determine InventoryItem, add InventoryItem to inventory, and update
+    InventoryItem's Item's in_circulation
+    '''
+    degree = random.random() * 360
     items = Item.objects.filter(rarity=map_degree_to_rarity(degree))
     index = random.randrange(items.count()) 
     obj, created = InventoryItem.objects.get_or_create(
@@ -155,41 +154,33 @@ def purchase_spin(request):
         'circulationNum': item.in_circulation, 
         'quantity': obj.quantity
     }
+
     return JsonResponse(response)
 
 def auto_log_in(request):
     if request.method != 'POST':
         return JsonResponse({'error': "Request error"}, status=400)
-    for BJwt in BlacklistedJWT.objects.all():
-        if request.headers.get('Authorization') == BJwt.jwt:
-            return JsonResponse({}, status=401)
-    try:
-        decoded = jwt.decode(request.headers.get('Authorization'), 
-            JWT_SECRET, 
-            algorithms=['HS256'])
-    except:
-        return JsonResponse({}, status=401)
+
+    authentication = authenticate(request, '', '')
+    if not authentication[0]: 
+        return authentication[1]
+    decoded = authentication[1] 
 
     user = User.objects.get(username=decoded['username'])
     
     return JsonResponse({
         'expirationDate': int(decoded['exp'] * 1000),
         'SP': user.sp
-        })
+    })
 
 def fetch_inventory(request):
     if request.method != 'GET':
         return JsonResponse({'fetchError': "Request error"}, status=400)
-    for BJwt in BlacklistedJWT.objects.all():
-        if request.headers.get('Authorization') == BJwt.jwt:
-            return JsonResponse({'fetchError': "Must be logged in..."}, 
-                status=401)
-    try:
-        decoded = jwt.decode(request.headers.get('Authorization'), 
-            JWT_SECRET, 
-            algorithms=['HS256'])
-    except:
-        return JsonResponse({'fetchError': "Must be logged in..."}, status=401)
+
+    authentication = authenticate(request, 'fetchError', "Must be logged in...")
+    if not authentication[0]: 
+        return authentication[1]
+    decoded = authentication[1] 
     
     user = User.objects.get(username=decoded['username'])
     response = {}
@@ -201,6 +192,7 @@ def fetch_inventory(request):
             'inventoryID': filtered[x].id, 
             'itemID': filtered[x].item.id
         }
+    
     return JsonResponse(response)
     
 def fetch_profile(request):
@@ -221,11 +213,18 @@ def fetch_profile(request):
     inventoryItems = InventoryItem.objects.filter(user=user)
     for x in range(inventoryItems.count()):
         showcaseItems.append(inventoryItems[x])
-    showcaseItems = sorted(showcaseItems, key=lambda el: 
-        (-map_rarity_to_value(el.item.rarity), el.item.in_circulation,
-        -el.quantity, el.id))[:3]
-    showcaseItems = list(map((lambda el: {'name': el.item.name, 
-        'rarity': el.item.rarity, 'quantity': el.quantity}), showcaseItems))
+    showcaseItems = sorted(showcaseItems, key=lambda el: (
+        -map_rarity_to_value(el.item.rarity), 
+        el.item.in_circulation,
+        -el.quantity, el.id
+        )
+    )[:3]
+    showcaseItems = list(map(lambda el: {
+        'name': el.item.name, 
+        'rarity': el.item.rarity, 
+        'quantity': el.quantity}, showcaseItems
+        )
+    )
     while len(showcaseItems) < 3:
         showcaseItems.append("nothing")
 
@@ -247,8 +246,8 @@ def fetch_profile(request):
         }
     }
     for rarity in rarities[:-1]:
-        response['stats']['rarityStats'][rarity.lower()] = user.__dict__[
-            '{}_unboxed'.format(rarity.lower())]
+        response['stats']['rarityStats'][rarity.lower()] \
+            = user.__dict__['{}_unboxed'.format(rarity.lower())]
     response['stats']['rarityStats']['???'] = user.tq_unboxed
 
     return JsonResponse(response)
@@ -256,19 +255,15 @@ def fetch_profile(request):
 def free_sp(request):
     if request.method != 'GET':
         return JsonResponse({'freeSPError': "Request error"}, status=400)
-    for BJwt in BlacklistedJWT.objects.all():
-        if request.headers.get('Authorization') == BJwt.jwt:
-            return JsonResponse({
-                'freeSPError': "Authentication error"
-            }, status=401)
-    try:
-        decoded = jwt.decode(request.headers.get('Authorization'), 
-            JWT_SECRET, 
-            algorithms=['HS256'])
-    except:
-        return JsonResponse({
-            'freeSPError': "Authentication error"
-        }, status=401)
+
+    authentication = authenticate(
+        request, 
+        'freeSPError', 
+        "Authentication error"
+    )
+    if not authentication[0]: 
+        return authentication[1]
+    decoded = authentication[1] 
     
     user = User.objects.get(username=decoded['username'])
     if time.time() - user.last_free_sp_time >= 7200: 
@@ -279,49 +274,38 @@ def free_sp(request):
         user.save()
         return JsonResponse({'freeSP': freeSPAmount})
 
-    timeLeft = str(sec_to_time(int(7200 
-        - (time.time() - user.last_free_sp_time))))
-    return JsonResponse({'freeSPError': "Next free SP in " + timeLeft}, 
+    timeLeft = int((7200 - (time.time() - user.last_free_sp_time)) * 1000)
+
+    return JsonResponse({'freeSPError': timeLeft}, 
         status=400)
 
 def list_item(request):
     if request.method != 'POST':
         return JsonResponse({'listError': "Request error"}, status=400)
-    for BJwt in BlacklistedJWT.objects.all():
-        if request.headers.get('Authorization') == BJwt.jwt:
-            return JsonResponse({
-                'listError': "Authentication error"
-            }, status=401)
-    try:
-        decoded = jwt.decode(request.headers.get('Authorization'), 
-            JWT_SECRET, 
-            algorithms=['HS256'])
-    except:
-        return JsonResponse({
-            'listError': "Authentication error"
-        }, status=401)
+    
+    authentication = authenticate(request, 'listError', "Authentication error")
+    if not authentication[0]: 
+        return authentication[1]
+    decoded = authentication[1] 
 
     try: 
         numPrice = int(request.POST.get('price'))
     except: 
-        return JsonResponse({
-            'listError': "Invalid price"
-        }, status=400)
+        return JsonResponse({'listError': "Invalid price"}, status=400)
     
     if numPrice < 1 or numPrice > 10000000: 
-        return JsonResponse({
-            'listError': "Invalid price"
-        }, status=400)
+        return JsonResponse({'listError': "Invalid price"}, status=400)
     
     user = User.objects.get(username=decoded['username'])
 
     if user.sp - math.floor(int(request.POST.get('price'))/20) < 0:
-        return JsonResponse({'listError': "Not enough SP"}, 
-            status=400)
+        return JsonResponse({'listError': "Not enough SP"}, status=400)
     
     try: 
-        inventoryItem = InventoryItem.objects.get(user=user.id,
-            item=request.POST.get('itemID'))
+        inventoryItem = InventoryItem.objects.get(
+            user=user.id,
+            item=request.POST.get('itemID')
+        )
     except: 
         return JsonResponse({'listError': "You don't have that item"}, 
             status=400)
@@ -335,8 +319,12 @@ def list_item(request):
     else:
         inventoryItem.delete()
 
-    MarketItem.objects.create(user=user, item=inventoryItem.item, 
-        price=int(request.POST.get('price')), listTime=time.time())
+    MarketItem.objects.create(
+        user=user, 
+        item=inventoryItem.item, 
+        price=int(request.POST.get('price')), 
+        listTime=time.time()
+    )
     
     return JsonResponse({})
 
@@ -358,59 +346,36 @@ def fetch_market(request):
 def buy_item(request):
     if request.method != 'POST':
         return JsonResponse({'buyError': "Request error"}, status=400)
-    for BJwt in BlacklistedJWT.objects.all():
-        if request.headers.get('Authorization') == BJwt.jwt:
-            return JsonResponse({
-                'buyError': "Authentication error"
-            }, status=401)
-    try:
-        decoded = jwt.decode(request.headers.get('Authorization'), 
-            JWT_SECRET, 
-            algorithms=['HS256'])
-    except:
-        return JsonResponse({
-            'buyError': "Authentication error"
-        }, status=401)
     
-    user = User.objects.get(username=decoded['username'])
+    authentication = authenticate(request, 'buyError', "Authentication error")
+    if not authentication[0]: 
+        return authentication[1]
+    decoded = authentication[1] 
+
+    buyer = User.objects.get(username=decoded['username'])
 
     try: 
         marketItem = MarketItem.objects.get(id=request.POST.get('marketID'))
     except: 
-        return JsonResponse({
-            'buyError': "Item already bought"
-        }, status=400)
+        return JsonResponse({'buyError': "Item already bought"}, status=400)
 
-    if user.sp < marketItem.price:
-        return JsonResponse({
-            'buyError': "Not enough SP"
-        }, status=400)
+    if buyer.sp < marketItem.price:
+        return JsonResponse({'buyError': "Not enough SP"}, status=400)
     
-    if user == marketItem.user: 
-        return JsonResponse({
-            'buyError': "Cannot buy own item"
-        }, status=400)
+    if buyer == marketItem.user: 
+        return JsonResponse({'buyError': "Cannot buy own item"}, status=400)
 
-    user.sp -= marketItem.price 
-    user.save()
+    buyer.sp -= marketItem.price 
+    buyer.save()
     
     inventoryItem, created = InventoryItem.objects.get_or_create(
-        user=user,
+        user=buyer,
         item=marketItem.item,
         defaults={'quantity': 1}
     )
     if not created:
         inventoryItem.quantity += 1
         inventoryItem.save()
-    else:
-        marketItems = MarketItem.objects.filter(
-            user=user, 
-            item=marketItem.item
-        )
-        print(marketItems.count())
-        if (marketItems.count() == 0):
-            user.items_found += 1
-            user.save()
 
     seller = marketItem.user
     seller.sp += marketItem.price
