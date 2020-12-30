@@ -15,9 +15,15 @@ def update_circulation(modeladmin, request, queryset):
 class ItemAdmin(admin.ModelAdmin): 
     actions = [update_circulation]
 
+class InventoryItemAdmin(admin.ModelAdmin):
+    readonly_fields = ('id',)
+
+class MarketItemAdmin(admin.ModelAdmin):
+    readonly_fields = ('id',)
+
 # Register your models here.
 admin.site.register(User)
 admin.site.register(BlacklistedJWT)
 admin.site.register(Item, ItemAdmin)
-admin.site.register(InventoryItem)
-admin.site.register(MarketItem)
+admin.site.register(InventoryItem, InventoryItemAdmin)
+admin.site.register(MarketItem, MarketItemAdmin)

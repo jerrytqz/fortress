@@ -39,6 +39,7 @@ def login(request):
         JWT_SECRET, 
         algorithm='HS256'
     ).decode('utf-8')
+
     response = JsonResponse({
         'token': encoded,
         'user': user.username,
@@ -64,13 +65,14 @@ def register(request):
         email=request.POST.get('email'),
         password=make_password(request.POST.get('password')),
         sp=0
-    
     )
+
     expirationTime = 3600
     encoded = jwt.encode(
         {'username': user.username, 'exp': time.time() + expirationTime}, 
         JWT_SECRET, 
-        algorithm='HS256').decode('utf-8')
+        algorithm='HS256'
+    ).decode('utf-8')
     
     return JsonResponse({
         'token': encoded,
@@ -206,9 +208,11 @@ def fetch_profile(request):
     # Find stats 
     user = User.objects.get(username=username)
     totalSpinItems = Item.objects.all().count()
-
-    # Find top 3 items according to rarity,
-    # then lowest in_circulation, then quantity, then lowest id (oldest)
+    
+    '''
+    Find top 3 items according to rarity,
+    then lowest in_circulation, then quantity, then lowest id (oldest)
+    '''
     showcaseItems = []
     inventoryItems = InventoryItem.objects.filter(user=user)
     for x in range(inventoryItems.count()):
