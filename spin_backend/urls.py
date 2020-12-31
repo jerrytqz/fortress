@@ -19,9 +19,9 @@ from leads import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('login/', views.login, name='login'),
+    path('log-in/', views.log_in, name='log_in'),
     path('register/', views.register, name='register'),
-    path('logout/', views.logout, name='logout'),
+    path('log-out/', views.log_out, name='log_out'),
     path('purchase-spin/', views.purchase_spin, name='purchase_spin'),
     path('auto-log-in/', views.auto_log_in, name='auto_log_in'),
     path('fetch-inventory/', views.fetch_inventory, name='fetch_inventory'),

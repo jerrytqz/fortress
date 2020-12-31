@@ -9,7 +9,7 @@ import requests
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.hashers import make_password, check_password 
-from spin_backend.settings import JWT_SECRET
+from spin_backend.settings import JWT_SECRET, WEB_SOCKET_BASE_DIR
 from leads.models import User, BlacklistedJWT, InventoryItem, Item, MarketItem
 from leads.utility import (
     rarities,
@@ -20,7 +20,7 @@ from leads.utility import (
 
 # Create your views here.
 
-def login(request):
+def log_in(request):
     if request.method != 'POST':
         return JsonResponse({'authError': "Request error"}, status=400)
 
@@ -82,7 +82,7 @@ def register(request):
         'expirationTime': expirationTime
     })
 
-def logout(request):
+def log_out(request):
     if request.method != 'POST':
         return JsonResponse({'authError': "Request error"}, status=400) 
     
@@ -324,12 +324,29 @@ def list_item(request):
     else:
         inventoryItem.delete()
 
-    MarketItem.objects.create(
+    marketItem = MarketItem.objects.create(
         user=user, 
         item=inventoryItem.item, 
         price=int(request.POST.get('price')), 
         listTime=time.time()
-    )
+    ) 
+
+    body = {
+        marketItem.id: {
+            'item': marketItem.item.name,
+            'seller': marketItem.user.username, 
+            'rarity': marketItem.item.rarity, 
+            'price': marketItem.price,
+            'listTime': int(marketItem.listTime * 1000)
+        }
+    } 
+    try:
+        requests.post(
+            WEB_SOCKET_BASE_DIR + 'item-listed', 
+            json=body
+        )
+    except:
+        pass
     
     return JsonResponse({})
 
@@ -375,10 +392,14 @@ def buy_item(request):
     clone = marketItem 
     marketItem.delete()
 
-    body = {'marketID': request.POST.get('marketID')}
+    body = {
+        'marketID': request.POST.get('marketID'), 
+        'seller': clone.user.username, 
+        'price': clone.price
+    }
     try:
         requests.post(
-            'https://spin-web-socket.jerryzheng5.repl.co/item-bought', 
+            WEB_SOCKET_BASE_DIR + 'item-bought', 
             data=body
         )
     except:
