@@ -4,12 +4,13 @@ import string
 import time
 import datetime
 import math
+import requests 
 
 from django.shortcuts import render
 from django.http import JsonResponse
-from leads.models import User, BlacklistedJWT, InventoryItem, Item, MarketItem
 from django.contrib.auth.hashers import make_password, check_password 
 from spin_backend.settings import JWT_SECRET
+from leads.models import User, BlacklistedJWT, InventoryItem, Item, MarketItem
 from leads.utility import (
     rarities,
     map_degree_to_rarity, 
@@ -208,7 +209,7 @@ def fetch_profile(request):
     # Find stats 
     user = User.objects.get(username=username)
     totalSpinItems = Item.objects.all().count()
-    
+
     '''
     Find top 3 items according to rarity,
     then lowest in_circulation, then quantity, then lowest id (oldest)
@@ -339,12 +340,14 @@ def fetch_market(request):
     response = {}
     marketItems = MarketItem.objects.all()
     for x in range(marketItems.count()):
-        response['{}|{}'.format(marketItems[x].item, marketItems[x].id)] = {
-        'seller': marketItems[x].user.username, 
-        'rarity': marketItems[x].item.rarity, 
-        'price': marketItems[x].price,
-        'listTime': int(marketItems[x].listTime * 1000)
-    }
+        response[marketItems[x].id] = {
+            'item': marketItems[x].item.name,
+            'seller': marketItems[x].user.username, 
+            'rarity': marketItems[x].item.rarity, 
+            'price': marketItems[x].price,
+            'listTime': int(marketItems[x].listTime * 1000)
+        }
+
     return JsonResponse(response)
 
 def buy_item(request):
@@ -362,30 +365,40 @@ def buy_item(request):
         marketItem = MarketItem.objects.get(id=request.POST.get('marketID'))
     except: 
         return JsonResponse({'buyError': "Item already bought"}, status=400)
-
+    
     if buyer.sp < marketItem.price:
         return JsonResponse({'buyError': "Not enough SP"}, status=400)
     
     if buyer == marketItem.user: 
         return JsonResponse({'buyError': "Cannot buy own item"}, status=400)
+    
+    clone = marketItem 
+    marketItem.delete()
 
-    buyer.sp -= marketItem.price 
+    body = {'marketID': request.POST.get('marketID')}
+    try:
+        requests.post(
+            'https://spin-web-socket.jerryzheng5.repl.co/item-bought', 
+            data=body
+        )
+    except:
+        pass
+
+    buyer.sp -= clone.price 
     buyer.save()
     
     inventoryItem, created = InventoryItem.objects.get_or_create(
         user=buyer,
-        item=marketItem.item,
+        item=clone.item,
         defaults={'quantity': 1}
     )
     if not created:
         inventoryItem.quantity += 1
         inventoryItem.save()
 
-    seller = marketItem.user
-    seller.sp += marketItem.price
-    seller.net_sp += marketItem.price 
+    seller = clone.user
+    seller.sp += clone.price
+    seller.net_sp += clone.price 
     seller.save()
-
-    marketItem.delete()
 
     return JsonResponse({})
