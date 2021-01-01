@@ -131,6 +131,7 @@ def purchase_spin(request):
         item=items[index],
         defaults={'quantity': 1}
     )
+
     if not created:
         obj.quantity += 1
         obj.save()
@@ -138,14 +139,27 @@ def purchase_spin(request):
     item.in_circulation += 1
     item.save()
 
+    body = {
+        'item': obj.item,
+        'rarity': obj.item.rarity,
+        'unboxer': user.username
+    } 
+    try:
+        requests.post(
+            WEB_SOCKET_BASE_DIR + 'item-unboxed', 
+            data=body
+        )
+    except:
+        pass
+
     # Update stats
     user.total_spins += 1
     if item.rarity == '???':
         user.tq_unboxed += 1
     else: 
         user.__dict__['{}_unboxed'.format(item.rarity).lower()] += 1
-    if created:
-        user.items_found += 1
+    # if created:
+    #     user.items_found += 1
     user.save()
 
     # Create response 
@@ -208,7 +222,7 @@ def fetch_profile(request):
 
     # Find stats 
     user = User.objects.get(username=username)
-    totalSpinItems = Item.objects.all().count()
+    # totalSpinItems = Item.objects.all().count()
 
     '''
     Find top 3 items according to rarity,
@@ -240,8 +254,8 @@ def fetch_profile(request):
             'SP': user.sp,
             'netSP': user.net_sp, 
             'totalSpins': user.total_spins, 
-            'itemsFound': user.items_found, 
-            'totalSpinItems': totalSpinItems, 
+            # 'itemsFound': user.items_found, 
+            # 'totalSpinItems': totalSpinItems, 
             'rarityStats': {}
         }, 
         'showcaseItems': {
@@ -281,8 +295,7 @@ def free_sp(request):
 
     timeLeft = int((7200 - (time.time() - user.last_free_sp_time)) * 1000)
 
-    return JsonResponse({'freeSPError': timeLeft}, 
-        status=400)
+    return JsonResponse({'freeSPError': timeLeft}, status=400)
 
 def list_item(request):
     if request.method != 'POST':
