@@ -44,7 +44,7 @@ def log_in(request):
     response = JsonResponse({
         'token': encoded,
         'user': user.username,
-        'SP': user.sp, 
+        'sp': user.sp, 
         'expirationTime': expirationTime
     })
 
@@ -78,7 +78,7 @@ def register(request):
     return JsonResponse({
         'token': encoded,
         'user': user.username,
-        'SP': user.sp,
+        'sp': user.sp,
         'expirationTime': expirationTime
     })
 
@@ -187,7 +187,7 @@ def auto_log_in(request):
     
     return JsonResponse({
         'expirationDate': int(decoded['exp'] * 1000),
-        'SP': user.sp
+        'sp': user.sp
     })
 
 def fetch_inventory(request):
@@ -251,7 +251,7 @@ def fetch_profile(request):
     response = {
         'username': username, 
         'stats': {
-            'SP': user.sp,
+            'sp': user.sp,
             'netSP': user.net_sp, 
             'totalSpins': user.total_spins, 
             # 'itemsFound': user.items_found, 
