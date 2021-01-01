@@ -99,15 +99,11 @@ def log_out(request):
     
     return JsonResponse({})
 
-def purchase_spin(request):
+def buy_spin(request):
     if request.method != 'POST':
-        return JsonResponse({'purchaseError': "Request error"}, status=400)
+        return JsonResponse({'buyError': "Request error"}, status=400)
 
-    authentication = authenticate(
-        request, 
-        'purchaseError', 
-        "Authentication error"
-    )
+    authentication = authenticate(request, 'buyError', "Authentication error")
     if not authentication[0]: 
         return authentication[1]
     decoded = authentication[1] 
@@ -115,7 +111,7 @@ def purchase_spin(request):
     # Subtract SP 
     user = User.objects.get(username=decoded['username'])
     if user.sp - 500 < 0:
-        return JsonResponse({'purchaseError': "Not enough SP"}, status=400)
+        return JsonResponse({'buyError': "Not enough SP"}, status=400)
     user.sp -= 500
     user.save()
     
@@ -206,8 +202,7 @@ def fetch_inventory(request):
         response['{}'.format(filtered[x].item)] = {
             'quantity': filtered[x].quantity, 
             'rarity': filtered[x].item.rarity, 
-            'inventoryID': filtered[x].id, 
-            'itemID': filtered[x].item.id
+            'inventoryID': filtered[x].id
         }
     
     return JsonResponse(response)
@@ -321,8 +316,8 @@ def list_item(request):
     
     try: 
         inventoryItem = InventoryItem.objects.get(
-            user=user.id,
-            item=request.POST.get('itemID')
+            id=request.POST.get('inventoryID'),
+            user=user
         )
     except: 
         return JsonResponse({'listError': "You don't have that item"}, 
