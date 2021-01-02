@@ -37,7 +37,7 @@ def log_in(request):
     
     expirationTime = 3600
     encoded = jwt.encode(
-        {'username': user.username, 'exp': time.time() + expirationTime}, 
+        {'user': user.username, 'exp': time.time() + expirationTime}, 
         JWT_SECRET, 
         algorithm='HS256'
     ).decode('utf-8')
@@ -71,7 +71,7 @@ def register(request):
 
     expirationTime = 3600
     encoded = jwt.encode(
-        {'username': user.username, 'exp': time.time() + expirationTime}, 
+        {'user': user.username, 'exp': time.time() + expirationTime}, 
         JWT_SECRET, 
         algorithm='HS256'
     ).decode('utf-8')
@@ -88,7 +88,7 @@ def log_out(request):
         return JsonResponse({'authError': "Request error"}, status=400) 
     
     try:
-        jwt.decode(
+        decoded = jwt.decode(
             request.headers.get('Authorization'), 
             JWT_SECRET, 
             algorithms=['HS256']
@@ -96,7 +96,10 @@ def log_out(request):
     except:
         return JsonResponse({'authError': "Log out error"}, status=401)
 
-    BlacklistedJWT.objects.create(jwt=request.headers.get('Authorization'))
+    BlacklistedJWT.objects.create(
+        jwt=request.headers.get('Authorization'),
+        exp_time=decoded['exp']
+    )
     
     return JsonResponse({})
 
@@ -110,16 +113,15 @@ def buy_spin(request):
     decoded = authentication[1] 
 
     # Subtract SP 
-    user = User.objects.get(username=decoded['username'])
+    user = User.objects.get(username=decoded['user'])
     if user.sp - 500 < 0:
         return JsonResponse({'buyError': "Not enough SP"}, status=400)
     user.sp -= 500
     user.save()
     
-    '''
-    Determine InventoryItem, add InventoryItem to inventory, and update
-    InventoryItem's Item's in_circulation
-    '''
+    # Determine InventoryItem, add InventoryItem to inventory, and update
+    # InventoryItem's Item's in_circulation
+    
     degree = random.random() * 360
     items = Item.objects.filter(rarity=map_degree_to_rarity(degree))
     index = random.randrange(items.count()) 
@@ -137,7 +139,7 @@ def buy_spin(request):
     item.save()
 
     body = {
-        'item': obj.item,
+        'itemName': obj.item.name,
         'rarity': obj.item.rarity,
         'unboxer': user.username
     }
@@ -178,7 +180,7 @@ def auto_log_in(request):
         return authentication[1]
     decoded = authentication[1] 
 
-    user = User.objects.get(username=decoded['username'])
+    user = User.objects.get(username=decoded['user'])
     
     return JsonResponse({
         'expirationDate': int(decoded['exp'] * 1000),
@@ -194,11 +196,11 @@ def fetch_inventory(request):
         return authentication[1]
     decoded = authentication[1] 
     
-    user = User.objects.get(username=decoded['username'])
+    user = User.objects.get(username=decoded['user'])
     response = {}
     filtered = InventoryItem.objects.filter(user=user)
     for x in range(filtered.count()):
-        response['{}'.format(filtered[x].item)] = {
+        response['{}'.format(filtered[x].item.name)] = {
             'quantity': filtered[x].quantity, 
             'rarity': filtered[x].item.rarity, 
             'inventoryID': filtered[x].id
@@ -218,10 +220,9 @@ def fetch_profile(request):
     user = User.objects.get(username=username)
     # totalSpinItems = Item.objects.all().count()
 
-    '''
-    Find top 3 items according to rarity,
-    then lowest in_circulation, then quantity, then lowest id (oldest)
-    '''
+    # Find top 3 items according to rarity,
+    # then lowest in_circulation, then quantity, then lowest id (oldest)
+
     showcaseItems = []
     inventoryItems = InventoryItem.objects.filter(user=user)
     for x in range(inventoryItems.count()):
@@ -278,7 +279,7 @@ def free_sp(request):
         return authentication[1]
     decoded = authentication[1] 
     
-    user = User.objects.get(username=decoded['username'])
+    user = User.objects.get(username=decoded['user'])
     if time.time() - user.last_free_sp_time >= 7200: 
         freeSPAmount = random.randint(1500, 3000)
         user.sp = user.sp + freeSPAmount
@@ -308,7 +309,7 @@ def list_item(request):
     if numPrice < 1 or numPrice > 10000000: 
         return JsonResponse({'listError': "Invalid price"}, status=400)
     
-    user = User.objects.get(username=decoded['username'])
+    user = User.objects.get(username=decoded['user'])
 
     if user.sp - math.floor(int(request.POST.get('price'))/20) < 0:
         return JsonResponse({'listError': "Not enough SP"}, status=400)
@@ -340,7 +341,7 @@ def list_item(request):
 
     body = {
         marketItem.id: {
-            'item': marketItem.item.name,
+            'itemName': marketItem.item.name,
             'seller': marketItem.user.username, 
             'rarity': marketItem.item.rarity, 
             'price': marketItem.price,
@@ -363,7 +364,7 @@ def fetch_market(request):
     marketItems = MarketItem.objects.all()
     for x in range(marketItems.count()):
         response[marketItems[x].id] = {
-            'item': marketItems[x].item.name,
+            'itemName': marketItems[x].item.name,
             'seller': marketItems[x].user.username, 
             'rarity': marketItems[x].item.rarity, 
             'price': marketItems[x].price,
@@ -381,7 +382,7 @@ def buy_item(request):
         return authentication[1]
     decoded = authentication[1] 
 
-    buyer = User.objects.get(username=decoded['username'])
+    buyer = User.objects.get(username=decoded['user'])
 
     try: 
         marketItem = MarketItem.objects.get(id=request.POST.get('marketID'))

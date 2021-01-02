@@ -1,3 +1,5 @@
+import time
+
 from django.contrib import admin
 from leads.models import User, BlacklistedJWT, Item, InventoryItem, MarketItem
 
@@ -12,8 +14,21 @@ def update_circulation(modeladmin, request, queryset):
         obj.save()
     update_circulation.short_description = "Update circulation number" 
 
+def remove_expired(modeladmin, request, queryset): 
+    list = []
+    for x in range(queryset.count()):
+        obj = BlacklistedJWT.objects.get(jwt=queryset[x].jwt)
+        if (obj.exp_time < time.time()):
+            list.append(obj)
+    for y in list: 
+        y.delete()
+    remove_expired.short_description = "Remove expired JWTs" 
+
 class ItemAdmin(admin.ModelAdmin): 
     actions = [update_circulation]
+
+class BlacklistedJWTAdmin(admin.ModelAdmin):
+    actions = [remove_expired]
 
 class InventoryItemAdmin(admin.ModelAdmin):
     readonly_fields = ('id',)
@@ -23,7 +38,7 @@ class MarketItemAdmin(admin.ModelAdmin):
 
 # Register your models here.
 admin.site.register(User)
-admin.site.register(BlacklistedJWT)
+admin.site.register(BlacklistedJWT, BlacklistedJWTAdmin)
 admin.site.register(Item, ItemAdmin)
 admin.site.register(InventoryItem, InventoryItemAdmin)
 admin.site.register(MarketItem, MarketItemAdmin)

@@ -24,6 +24,7 @@ class User(models.Model):
 
 class BlacklistedJWT(models.Model):
     jwt = models.CharField(max_length=512)
+    exp_time = models.IntegerField(default=0)
 
     def __str__(self):
         return self.jwt
