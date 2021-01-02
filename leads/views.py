@@ -9,6 +9,7 @@ import requests
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.hashers import make_password, check_password 
+from multiprocessing.dummy import Pool
 from spin_backend.settings import JWT_SECRET, WEB_SOCKET_BASE_DIR
 from leads.models import User, BlacklistedJWT, InventoryItem, Item, MarketItem
 from leads.utility import (
@@ -139,14 +140,12 @@ def buy_spin(request):
         'item': obj.item,
         'rarity': obj.item.rarity,
         'unboxer': user.username
-    } 
-    try:
-        requests.post(
-            WEB_SOCKET_BASE_DIR + 'item-unboxed', 
-            data=body
-        )
-    except:
-        pass
+    }
+    Pool(1).apply_async(
+        requests.post, 
+        [WEB_SOCKET_BASE_DIR + 'item-unboxed'], 
+        {'data': body}
+    ) 
 
     # Update stats
     user.total_spins += 1
@@ -347,15 +346,13 @@ def list_item(request):
             'price': marketItem.price,
             'listTime': int(marketItem.listTime * 1000)
         }
-    } 
-    try:
-        requests.post(
-            WEB_SOCKET_BASE_DIR + 'item-listed', 
-            json=body
-        )
-    except:
-        pass
-    
+    }
+    Pool(1).apply_async(
+        requests.post, 
+        [WEB_SOCKET_BASE_DIR + 'item-listed'], 
+        {'json': body}
+    ) 
+
     return JsonResponse({})
 
 def fetch_market(request):
@@ -405,13 +402,10 @@ def buy_item(request):
         'seller': clone.user.username, 
         'price': clone.price
     }
-    try:
-        requests.post(
-            WEB_SOCKET_BASE_DIR + 'item-bought', 
-            data=body
-        )
-    except:
-        pass
+    requests.post(
+        WEB_SOCKET_BASE_DIR + 'item-bought', 
+        data=body
+    )
 
     buyer.sp -= clone.price 
     buyer.save()
