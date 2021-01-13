@@ -5,6 +5,15 @@ from spin_backend.settings import JWT_SECRET
 from django.http import JsonResponse
 
 rarities = ['Common', 'Uncommon', 'Rare', 'Epic', 'Holy', 'Godly', '???']
+rarityToValue = {
+    'Common': 1,
+    'Uncommon': 2,
+    'Rare': 3,
+    'Epic': 4,
+    'Holy': 5,
+    'Godly': 6,
+    '???': 7
+}
 
 def map_degree_to_rarity(degree):
     if 0 <= degree and degree < 187.2:
@@ -21,23 +30,7 @@ def map_degree_to_rarity(degree):
         return rarities[5]
     if 359.964 <= degree and degree < 360:
         return rarities[6]
-
-def map_rarity_to_value(rarity): 
-    if (rarity == rarities[0]): 
-        return 1
-    if (rarity == rarities[1]): 
-        return 2
-    if (rarity == rarities[2]):
-        return 3
-    if (rarity == rarities[3]):
-        return 4
-    if (rarity == rarities[4]):
-        return 5
-    if (rarity == rarities[5]):
-        return 6
-    if (rarity == rarities[6]):
-        return 7
-
+        
 def authenticate(request, errorName, errorMessage): 
     for token in BlacklistedJWT.objects.all():
         if request.headers.get('Authorization') == token.jwt: 

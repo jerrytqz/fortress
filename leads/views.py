@@ -14,8 +14,8 @@ from spin_backend.settings import JWT_SECRET, WEB_SOCKET_BASE_DIR
 from leads.models import User, BlacklistedJWT, InventoryItem, Item, MarketItem
 from leads.utility import (
     rarities,
+    rarityToValue,
     map_degree_to_rarity, 
-    map_rarity_to_value, 
     authenticate
 )
 
@@ -228,7 +228,7 @@ def fetch_profile(request):
     for x in range(inventoryItems.count()):
         showcaseItems.append(inventoryItems[x])
     showcaseItems = sorted(showcaseItems, key=lambda el: (
-        -map_rarity_to_value(el.item.rarity), 
+        -rarityToValue[el.item.rarity], 
         el.item.in_circulation,
         -el.quantity, el.id
         )
