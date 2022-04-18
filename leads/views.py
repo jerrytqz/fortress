@@ -348,12 +348,11 @@ def list_item(request):
             'listTime': int(marketItem.listTime * 1000)
         }
     }
-    Pool(1).apply_async(
-        requests.post, 
-        [WEB_SOCKET_BASE_DIR + 'item-listed'], 
-        {'json': body}
+    requests.post(
+        WEB_SOCKET_BASE_DIR + 'item-listed', 
+        json=body
     ) 
-
+    
     return JsonResponse({})
 
 def fetch_market(request):
