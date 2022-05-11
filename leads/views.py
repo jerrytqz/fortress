@@ -40,7 +40,7 @@ def log_in(request):
         {'user': user.username, 'exp': time.time() + expirationTime}, 
         JWT_SECRET, 
         algorithm='HS256'
-    ).decode('utf-8')
+    )
 
     response = JsonResponse({
         'token': encoded,
@@ -74,7 +74,7 @@ def register(request):
         {'user': user.username, 'exp': time.time() + expirationTime}, 
         JWT_SECRET, 
         algorithm='HS256'
-    ).decode('utf-8')
+    )
     
     return JsonResponse({
         'token': encoded,

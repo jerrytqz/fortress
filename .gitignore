@@ -1,5 +1,7 @@
-db.sqlite3
-spin_backend/settings.py
-TODO
 .vscode
 __pycache__
+
+db.sqlite3
+spin_backend/settings.py
+
+TODO
