@@ -27,7 +27,7 @@ urlpatterns = [
     path('fetch-inventory/', views.fetch_inventory, name='fetch_inventory'),
     path('fetch-profile/', views.fetch_profile, name='fetch_profile'),
     path('free-sp/', views.free_sp, name='free_sp'),
-    path('list-item/', views.list_item, name='list-item'),
-    path('fetch-market/', views.fetch_market, name='fetch-market'),
-    path('buy-item/', views.buy_item, name='buy-item'),
+    path('list-item/', views.list_item, name='list_item'),
+    path('fetch-market/', views.fetch_market, name='fetch_market'),
+    path('buy-item/', views.buy_item, name='buy_item'),
 ]
