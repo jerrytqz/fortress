@@ -30,4 +30,4 @@ urlpatterns = [
     path('list-item/', views.list_item, name='list_item'),
     path('fetch-market/', views.fetch_market, name='fetch_market'),
     path('buy-item/', views.buy_item, name='buy_item'),
-]
+] 
