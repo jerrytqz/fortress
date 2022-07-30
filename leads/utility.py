@@ -1,6 +1,6 @@
 import jwt
 
-from leads.models import User, BlacklistedJWT
+from leads.models import BlacklistedJWT
 from spin_backend.settings import JWT_SECRET
 from django.http import JsonResponse
 
