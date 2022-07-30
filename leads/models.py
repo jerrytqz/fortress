@@ -2,6 +2,8 @@ from django.db import models
 # Create your models here.
 
 class User(models.Model):
+    id = models.AutoField(primary_key=True)
+
     username = models.CharField(max_length=16, unique=True)
     email = models.EmailField()
     password = models.CharField(max_length=128)
@@ -23,6 +25,8 @@ class User(models.Model):
         return self.username 
 
 class BlacklistedJWT(models.Model):
+    id = models.AutoField(primary_key=True)
+
     jwt = models.CharField(max_length=512)
     exp_time = models.IntegerField(default=0)
 
@@ -30,6 +34,8 @@ class BlacklistedJWT(models.Model):
         return self.jwt
 
 class Item(models.Model): 
+    id = models.AutoField(primary_key=True)
+
     name = models.CharField(max_length=32, unique=True)
     rarity = models.CharField(max_length=16)
     description = models.CharField(max_length=128, default="")
@@ -42,6 +48,8 @@ class Item(models.Model):
         ordering = ['name']
 
 class InventoryItem(models.Model): 
+    id = models.AutoField(primary_key=True)
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity = models.IntegerField()
@@ -52,7 +60,9 @@ class InventoryItem(models.Model):
     class Meta: 
         ordering = ['user', 'item']
     
-class MarketItem(models.Model): 
+class MarketItem(models.Model):
+    id = models.AutoField(primary_key=True)
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     price = models.IntegerField(default=0)
