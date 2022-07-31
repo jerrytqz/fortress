@@ -5,5 +5,5 @@ __pycache__
 db.sqlite3
 spin_backend/settings.py
 
-spin_backend_env
+development_env
 TODO
