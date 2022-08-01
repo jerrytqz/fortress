@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.hashers import make_password, check_password 
 from multiprocessing.dummy import Pool
-from spin_backend.settings import JWT_SECRET, WEB_SOCKET_BASE_DIR
+from spin_backend.settings import JWT_SECRET, SOCKET_IO_BASE_DIR
 from leads.models import User, BlacklistedJWT, InventoryItem, Item, MarketItem
 from leads.utility import (
     rarities,
@@ -143,7 +143,7 @@ def buy_spin(request):
     }
     Pool(1).apply_async(
         requests.post, 
-        [WEB_SOCKET_BASE_DIR + 'item-unboxed'], 
+        [SOCKET_IO_BASE_DIR + 'item-unboxed'], 
         {'data': body}
     ) 
 
@@ -321,14 +321,14 @@ def list_item(request):
         return JsonResponse({'listError': "You don't have that item"}, 
             status=400)
 
-    user.sp -= math.floor(int(request.POST.get('price'))/20)
-    user.save()
-    
     if inventoryItem.quantity > 1: 
         inventoryItem.quantity -= 1
         inventoryItem.save()
     else:
         inventoryItem.delete()
+
+    user.sp -= math.floor(int(request.POST.get('price'))/20)
+    user.save()
 
     marketItem = MarketItem.objects.create(
         user=user, 
@@ -347,7 +347,7 @@ def list_item(request):
         }
     }
     requests.post(
-        WEB_SOCKET_BASE_DIR + 'item-listed', 
+        SOCKET_IO_BASE_DIR + 'item-listed', 
         json=body
     ) 
     
@@ -392,34 +392,33 @@ def buy_item(request):
     if buyer == marketItem.user: 
         return JsonResponse({'buyError': "Cannot buy own item"}, status=400)
     
-    clone = marketItem 
     marketItem.delete()
 
     body = {
         'marketID': request.POST.get('marketID'), 
-        'seller': clone.user.username, 
-        'price': clone.price
+        'seller': marketItem.user.username, 
+        'price': marketItem.price
     }
     requests.post(
-        WEB_SOCKET_BASE_DIR + 'item-bought', 
+        SOCKET_IO_BASE_DIR + 'item-bought', 
         data=body
     )
 
-    buyer.sp -= clone.price 
+    buyer.sp -= marketItem.price 
     buyer.save()
     
     inventoryItem, created = InventoryItem.objects.get_or_create(
         user=buyer,
-        item=clone.item,
+        item=marketItem.item,
         defaults={'quantity': 1}
     )
     if not created:
         inventoryItem.quantity += 1
         inventoryItem.save()
 
-    seller = clone.user
-    seller.sp += clone.price
-    seller.net_sp += clone.price 
+    seller = marketItem.user
+    seller.sp += marketItem.price
+    seller.net_sp += marketItem.price 
     seller.save()
 
     return JsonResponse({})
