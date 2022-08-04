@@ -3,12 +3,17 @@ import random
 import time
 import math
 import requests 
+import os
+import importlib
 
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.hashers import make_password, check_password 
 from multiprocessing.dummy import Pool
-from spin_backend.settings import JWT_SECRET, SOCKET_IO_BASE_DIR
+settings = importlib.import_module(os.environ['DJANGO_SETTINGS_MODULE'])
+JWT_SECRET = settings.JWT_SECRET
+SOCKET_IO_BASE_DIR = settings.SOCKET_IO_BASE_DIR
+
 from leads.models import User, BlacklistedJWT, InventoryItem, Item, MarketItem
 from leads.utility import (
     rarities,

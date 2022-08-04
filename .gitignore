@@ -1,9 +1,9 @@
 .vscode
 __pycache__
+spin_backend_env
+TODO
 
 # Not committed for security
+spin_backend/development_settings.py
+spin_backend/production_settings.py
 db.sqlite3
-spin_backend/settings.py
-
-development_env
-TODO

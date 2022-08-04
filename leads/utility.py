@@ -1,8 +1,11 @@
 import jwt
+import os
+import importlib
 
 from leads.models import BlacklistedJWT
-from spin_backend.settings import JWT_SECRET
 from django.http import JsonResponse
+settings = importlib.import_module(os.environ['DJANGO_SETTINGS_MODULE'])
+JWT_SECRET = settings.JWT_SECRET
 
 rarities = ['Common', 'Uncommon', 'Rare', 'Epic', 'Holy', 'Godly', '???']
 rarityToValue = {
