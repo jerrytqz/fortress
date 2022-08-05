@@ -138,5 +138,6 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = ['https://spin.jerrytq.com']
 
 JWT_SECRET = os.environ['JWT_SECRET']
+SOCKET_KEY = os.environ['SOCKET_KEY']
 
 django_heroku.settings(locals())

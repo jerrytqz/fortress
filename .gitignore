@@ -1,8 +1,8 @@
 .vscode
 __pycache__
 spin_backend_env
-TODO
 
 # Security
 spin_backend/development_settings.py
 db.sqlite3
+TODO

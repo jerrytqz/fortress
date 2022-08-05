@@ -13,6 +13,7 @@ from multiprocessing.dummy import Pool
 settings = importlib.import_module(os.environ['DJANGO_SETTINGS_MODULE'])
 JWT_SECRET = settings.JWT_SECRET
 SOCKET_IO_BASE_DIR = settings.SOCKET_IO_BASE_DIR
+SOCKET_KEY = settings.SOCKET_KEY
 
 from leads.models import User, BlacklistedJWT, InventoryItem, Item, MarketItem
 from leads.utility import (
@@ -149,7 +150,7 @@ def buy_spin(request):
     Pool(1).apply_async(
         requests.post, 
         [SOCKET_IO_BASE_DIR + 'item-unboxed'], 
-        {'data': body}
+        {'data': body, 'headers': {'Authorization': SOCKET_KEY}}
     ) 
 
     # Update stats
@@ -353,6 +354,7 @@ def list_item(request):
     }
     requests.post(
         SOCKET_IO_BASE_DIR + 'item-listed', 
+        headers={'Authorization': SOCKET_KEY},
         json=body
     ) 
     
@@ -406,6 +408,7 @@ def buy_item(request):
     }
     requests.post(
         SOCKET_IO_BASE_DIR + 'item-bought', 
+        headers={'Authorization': SOCKET_KEY},
         data=body
     )
 
