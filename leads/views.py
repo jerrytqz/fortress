@@ -8,8 +8,10 @@ import importlib
 
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.core.validators import validate_email
 from django.contrib.auth.hashers import make_password, check_password 
-from multiprocessing.dummy import Pool
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 settings = importlib.import_module(os.environ['DJANGO_SETTINGS_MODULE'])
 JWT_SECRET = settings.JWT_SECRET
 SOCKET_IO_BASE_DIR = settings.SOCKET_IO_BASE_DIR
@@ -33,11 +35,11 @@ def log_in(request):
         user = User.objects.get(username=request.POST.get('username'))
     except:
         return JsonResponse({
-            'authError': "User could not be found"
+            'authError': "The user could not be found."
         }, status=400)
     
     if not check_password(request.POST.get('password'), user.password):
-        return JsonResponse({'authError': "Incorrect password"}, status=400) 
+        return JsonResponse({'authError': "The password is incorrect."}, status=400) 
     
     expirationTime = 3600
     encoded = jwt.encode(
@@ -46,25 +48,47 @@ def log_in(request):
         algorithm='HS256'
     )
 
-    response = JsonResponse({
+    response = {
         'token': encoded,
         'user': user.username,
         'sp': user.sp, 
         'expirationTime': expirationTime
-    })
+    }
 
-    return response 
+    return JsonResponse(response) 
 
 def register(request):
     if request.method != 'POST':
         return JsonResponse({'authError': "Request error"}, status=400) 
     
-    if not request.POST.get('password') == request.POST.get('confirmPassword'):
-        return JsonResponse({'authError': "Passwords do not match"}, status=400)
-    
+    # Check if username is valid
+    maxNameLength = User._meta.get_field('username').max_length
+
+    if len(request.POST.get('username')) == 0 or len(request.POST.get('username')) > maxNameLength:
+        return JsonResponse(
+            {'authError': """This username does not meet length requirements. 
+                Username lengths should be between 1 and {} inclusive.""".format(maxNameLength)},
+            status=400
+        )
+
     for user in User.objects.all():
         if request.POST.get('username') == user.username:
-            return JsonResponse({'authError': "Username is taken"}, status=400)
+            return JsonResponse({'authError': "This username is taken."}, status=400)
+    
+    # Check if email is valid
+    try:
+        validate_email(request.POST.get('email'))
+    except ValidationError as err:
+        return JsonResponse({'authError': [e.message for e in err.error_list]}, status=400)
+    
+    # Check if password is valid
+    if not request.POST.get('password') == request.POST.get('confirmPassword'):
+        return JsonResponse({'authError': "The passwords do not match."}, status=400)
+    
+    try:
+        validate_password(request.POST.get('password'))
+    except ValidationError as err:
+        return JsonResponse({'authError': [e.message for e in err.error_list]}, status=400)
     
     user = User.objects.create(
         username=request.POST.get('username'),
@@ -142,17 +166,6 @@ def buy_spin(request):
     item.in_circulation += 1
     item.save()
 
-    body = {
-        'itemName': obj.item.name,
-        'rarity': obj.item.rarity,
-        'unboxer': user.username
-    }
-    Pool(1).apply_async(
-        requests.post, 
-        [SOCKET_IO_BASE_DIR + 'item-unboxed'], 
-        {'data': body, 'headers': {'Authorization': SOCKET_KEY}}
-    ) 
-
     # Update stats
     user.total_spins += 1
     if item.rarity == '???':
@@ -172,6 +185,21 @@ def buy_spin(request):
         'circulationNum': item.in_circulation, 
         'quantity': obj.quantity
     }
+
+    body = {
+        'itemName': obj.item.name,
+        'rarity': obj.item.rarity,
+        'unboxer': user.username
+    }
+    try:
+        requests.post(
+            SOCKET_IO_BASE_DIR + 'item-unboxed', 
+            headers={'Authorization': SOCKET_KEY},
+            json=body
+        )
+    except Exception:
+        # Posting to Socket.io is not essential
+        pass
 
     return JsonResponse(response)
 
@@ -226,7 +254,6 @@ def fetch_profile(request):
 
     # Find top 3 items according to rarity,
     # then lowest in_circulation, then quantity, then lowest id (oldest)
-
     showcaseItems = []
     inventoryItems = InventoryItem.objects.filter(user=user)
     for x in range(inventoryItems.count()):
@@ -352,11 +379,15 @@ def list_item(request):
             'listTime': int(marketItem.listTime * 1000)
         }
     }
-    requests.post(
-        SOCKET_IO_BASE_DIR + 'item-listed', 
-        headers={'Authorization': SOCKET_KEY},
-        json=body
-    ) 
+    try:
+        requests.post(
+            SOCKET_IO_BASE_DIR + 'item-listed', 
+            headers={'Authorization': SOCKET_KEY},
+            json=body
+        ) 
+    except Exception:
+        # Posting to Socket.io is not essential
+        pass
     
     return JsonResponse({})
 
@@ -401,17 +432,6 @@ def buy_item(request):
     
     marketItem.delete()
 
-    body = {
-        'marketID': request.POST.get('marketID'), 
-        'seller': marketItem.user.username, 
-        'price': marketItem.price
-    }
-    requests.post(
-        SOCKET_IO_BASE_DIR + 'item-bought', 
-        headers={'Authorization': SOCKET_KEY},
-        data=body
-    )
-
     buyer.sp -= marketItem.price 
     buyer.save()
     
@@ -428,5 +448,20 @@ def buy_item(request):
     seller.sp += marketItem.price
     seller.net_sp += marketItem.price 
     seller.save()
+
+    body = {
+        'marketID': request.POST.get('marketID'), 
+        'seller': marketItem.user.username, 
+        'price': marketItem.price
+    }
+    try:
+        requests.post(
+            SOCKET_IO_BASE_DIR + 'item-bought', 
+            headers={'Authorization': SOCKET_KEY},
+            data=body
+        )
+    except Exception:
+        # Posting to Socket.io is not essential
+        pass
 
     return JsonResponse({})
