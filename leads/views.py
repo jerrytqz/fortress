@@ -19,8 +19,15 @@ SOCKET_KEY = settings.SOCKET_KEY
 
 from leads.models import User, BlacklistedJWT, InventoryItem, Item, MarketItem
 from leads.utility import (
-    rarities,
-    rarityToValue,
+    SPIN_PRICE,
+    JWT_EXPIRATION_TIME,
+    FREE_SP_TIMEOUT,
+    FREE_SP_LOW,
+    FREE_SP_HIGH,
+    MAX_LIST_PRICE,
+    LIST_PRICE_PER_FEE,
+    RARITIES,
+    RARITY_TO_VALUE,
     map_degree_to_rarity, 
     authenticate
 )
@@ -41,9 +48,8 @@ def log_in(request):
     if not check_password(request.POST.get('password'), user.password):
         return JsonResponse({'authError': "The password is incorrect."}, status=400) 
     
-    expirationTime = 3600
     encoded = jwt.encode(
-        {'user': user.username, 'exp': time.time() + expirationTime}, 
+        {'user': user.username, 'exp': time.time() + JWT_EXPIRATION_TIME}, 
         JWT_SECRET, 
         algorithm='HS256'
     )
@@ -52,7 +58,7 @@ def log_in(request):
         'token': encoded,
         'user': user.username,
         'sp': user.sp, 
-        'expirationTime': expirationTime
+        'expirationTime': JWT_EXPIRATION_TIME
     }
 
     return JsonResponse(response) 
@@ -97,9 +103,8 @@ def register(request):
         sp=0
     )
 
-    expirationTime = 3600
     encoded = jwt.encode(
-        {'user': user.username, 'exp': time.time() + expirationTime}, 
+        {'user': user.username, 'exp': time.time() + JWT_EXPIRATION_TIME}, 
         JWT_SECRET, 
         algorithm='HS256'
     )
@@ -108,7 +113,7 @@ def register(request):
         'token': encoded,
         'user': user.username,
         'sp': user.sp,
-        'expirationTime': expirationTime
+        'expirationTime': JWT_EXPIRATION_TIME
     })
 
 def log_out(request):
@@ -133,23 +138,22 @@ def log_out(request):
 
 def buy_spin(request):
     if request.method != 'POST':
-        return JsonResponse({'buyError': "Request error"}, status=400)
+        return JsonResponse({'buySpinError': "Request error"}, status=400)
 
-    authentication = authenticate(request, 'buyError', "Authentication error")
+    authentication = authenticate(request, 'buySpinError', "Authentication error")
     if not authentication[0]: 
         return authentication[1]
     decoded = authentication[1] 
 
     # Subtract SP 
     user = User.objects.get(username=decoded['user'])
-    if user.sp - 500 < 0:
-        return JsonResponse({'buyError': "Not enough SP"}, status=400)
-    user.sp -= 500
+    if user.sp - SPIN_PRICE < 0:
+        return JsonResponse({'buySpinError': "Not enough SP"}, status=400)
+    user.sp -= SPIN_PRICE
     user.save()
     
     # Determine InventoryItem, add InventoryItem to inventory, and update
     # InventoryItem's Item's in_circulation
-    
     degree = random.random() * 360
     items = Item.objects.filter(rarity=map_degree_to_rarity(degree))
     index = random.randrange(items.count()) 
@@ -205,7 +209,7 @@ def buy_spin(request):
 
 def auto_log_in(request):
     if request.method != 'POST':
-        return JsonResponse({'error': "Request error"}, status=400)
+        return JsonResponse({'authError': "Request error"}, status=400)
 
     authentication = authenticate(request, '', '')
     if not authentication[0]: 
@@ -221,9 +225,9 @@ def auto_log_in(request):
 
 def fetch_inventory(request):
     if request.method != 'GET':
-        return JsonResponse({'fetchError': "Request error"}, status=400)
+        return JsonResponse({'fetchInventoryError': "Request error"}, status=400)
 
-    authentication = authenticate(request, 'fetchError', "Must be logged in...")
+    authentication = authenticate(request, 'fetchInventoryError', "Must be logged in...")
     if not authentication[0]: 
         return authentication[1]
     decoded = authentication[1] 
@@ -242,11 +246,11 @@ def fetch_inventory(request):
     
 def fetch_profile(request):
     if request.method != 'POST':
-        return JsonResponse({'fetchError': "Request error"}, status=400)
+        return JsonResponse({'fetchProfileError': "Request error"}, status=400)
 
     username = request.POST.get('username')
     if len(User.objects.filter(username=username)) != 1: 
-        return JsonResponse({'fetchError': "No such user..."}, status=400)
+        return JsonResponse({'fetchProfileError': "No such user..."}, status=400)
 
     # Find stats 
     user = User.objects.get(username=username)
@@ -259,7 +263,7 @@ def fetch_profile(request):
     for x in range(inventoryItems.count()):
         showcaseItems.append(inventoryItems[x])
     showcaseItems = sorted(showcaseItems, key=lambda el: (
-        -rarityToValue[el.item.rarity], 
+        -RARITY_TO_VALUE[el.item.rarity], 
         el.item.in_circulation,
         -el.quantity, el.id
         )
@@ -290,7 +294,7 @@ def fetch_profile(request):
             'three': showcaseItems[2]
         }
     }
-    for rarity in rarities[:-1]:
+    for rarity in RARITIES[:-1]:
         response['stats']['rarityStats'][rarity.lower()] \
             = user.__dict__['{}_unboxed'.format(rarity.lower())]
     response['stats']['rarityStats']['???'] = user.tq_unboxed
@@ -311,23 +315,23 @@ def free_sp(request):
     decoded = authentication[1] 
     
     user = User.objects.get(username=decoded['user'])
-    if time.time() - user.last_free_sp_time >= 7200: 
-        freeSPAmount = random.randint(1500, 3000)
+    if time.time() - user.last_free_sp_time >= FREE_SP_TIMEOUT: 
+        freeSPAmount = random.randint(FREE_SP_LOW, FREE_SP_HIGH)
         user.sp = user.sp + freeSPAmount
         user.net_sp = user.net_sp + freeSPAmount 
         user.last_free_sp_time = time.time()
         user.save()
         return JsonResponse({'freeSP': freeSPAmount})
 
-    timeLeft = int((7200 - (time.time() - user.last_free_sp_time)) * 1000)
+    timeLeft = int((FREE_SP_TIMEOUT - (time.time() - user.last_free_sp_time)) * 1000)
 
     return JsonResponse({'freeSPError': timeLeft}, status=400)
 
 def list_item(request):
     if request.method != 'POST':
-        return JsonResponse({'listError': "Request error"}, status=400)
+        return JsonResponse({'listItemError': "Request error"}, status=400)
     
-    authentication = authenticate(request, 'listError', "Authentication error")
+    authentication = authenticate(request, 'listItemError', "Authentication error")
     if not authentication[0]: 
         return authentication[1]
     decoded = authentication[1] 
@@ -335,15 +339,15 @@ def list_item(request):
     try: 
         numPrice = int(request.POST.get('price'))
     except: 
-        return JsonResponse({'listError': "Invalid price"}, status=400)
+        return JsonResponse({'listItemError': "Invalid price"}, status=400)
     
-    if numPrice < 1 or numPrice > 10000000: 
-        return JsonResponse({'listError': "Invalid price"}, status=400)
+    if numPrice <= 0 or numPrice > MAX_LIST_PRICE: 
+        return JsonResponse({'listItemError': "Invalid price"}, status=400)
     
     user = User.objects.get(username=decoded['user'])
 
-    if user.sp - math.floor(int(request.POST.get('price'))/20) < 0:
-        return JsonResponse({'listError': "Not enough SP"}, status=400)
+    if user.sp - math.floor(int(request.POST.get('price'))/LIST_PRICE_PER_FEE) < 0:
+        return JsonResponse({'listItemError': "Not enough SP"}, status=400)
     
     try: 
         inventoryItem = InventoryItem.objects.get(
@@ -351,7 +355,7 @@ def list_item(request):
             user=user
         )
     except: 
-        return JsonResponse({'listError': "You don't have that item"}, 
+        return JsonResponse({'listItemError': "You don't have that item"}, 
             status=400)
 
     if inventoryItem.quantity > 1: 
@@ -360,7 +364,7 @@ def list_item(request):
     else:
         inventoryItem.delete()
 
-    user.sp -= math.floor(int(request.POST.get('price'))/20)
+    user.sp -= math.floor(int(request.POST.get('price'))/LIST_PRICE_PER_FEE)
     user.save()
 
     marketItem = MarketItem.objects.create(
@@ -393,7 +397,7 @@ def list_item(request):
 
 def fetch_market(request):
     if request.method != 'GET':
-        return JsonResponse({'fetchError': "Request error"}, status=400)
+        return JsonResponse({'fetchMarketError': "Request error"}, status=400)
 
     response = {}
     marketItems = MarketItem.objects.all()
@@ -410,9 +414,9 @@ def fetch_market(request):
 
 def buy_item(request):
     if request.method != 'POST':
-        return JsonResponse({'buyError': "Request error"}, status=400)
+        return JsonResponse({'buyItemError': "Request error"}, status=400)
     
-    authentication = authenticate(request, 'buyError', "Authentication error")
+    authentication = authenticate(request, 'buyItemError', "Authentication error")
     if not authentication[0]: 
         return authentication[1]
     decoded = authentication[1] 
@@ -422,13 +426,13 @@ def buy_item(request):
     try: 
         marketItem = MarketItem.objects.get(id=request.POST.get('marketID'))
     except: 
-        return JsonResponse({'buyError': "Item already bought"}, status=400)
+        return JsonResponse({'buyItemError': "Item already bought"}, status=400)
     
     if buyer.sp < marketItem.price:
-        return JsonResponse({'buyError': "Not enough SP"}, status=400)
+        return JsonResponse({'buyItemError': "Not enough SP"}, status=400)
     
     if buyer == marketItem.user: 
-        return JsonResponse({'buyError': "Cannot buy own item"}, status=400)
+        return JsonResponse({'buyItemError': "Cannot buy own item"}, status=400)
     
     marketItem.delete()
 
