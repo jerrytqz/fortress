@@ -54,14 +54,12 @@ def log_in(request):
         algorithm='HS256'
     )
 
-    response = {
+    return JsonResponse({
         'token': encoded,
         'user': user.username,
         'sp': user.sp, 
         'expirationTime': JWT_EXPIRATION_TIME
-    }
-
-    return JsonResponse(response) 
+    }) 
 
 def register(request):
     if request.method != 'POST':
@@ -127,7 +125,7 @@ def log_out(request):
             algorithms=['HS256']
         )
     except:
-        return JsonResponse({'authError': "Log out error"}, status=401)
+        return JsonResponse({'authError': "Log out error. Try refreshing."}, status=401)
 
     BlacklistedJWT.objects.create(
         jwt=request.headers.get('Authorization'),
@@ -211,7 +209,7 @@ def auto_log_in(request):
     if request.method != 'POST':
         return JsonResponse({'authError': "Request error"}, status=400)
 
-    authentication = authenticate(request, '', '')
+    authentication = authenticate(request, 'authError', 'Authentication error')
     if not authentication[0]: 
         return authentication[1]
     decoded = authentication[1] 
