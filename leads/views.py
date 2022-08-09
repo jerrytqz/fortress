@@ -116,7 +116,7 @@ def register(request):
 
 def log_out(request):
     if request.method != 'POST':
-        return JsonResponse({'authError': "Request error"}, status=400) 
+        return JsonResponse({'logOutError': "Request error"}, status=400) 
     
     try:
         decoded = jwt.decode(
@@ -125,7 +125,7 @@ def log_out(request):
             algorithms=['HS256']
         )
     except:
-        return JsonResponse({'authError': "Log out error. Try refreshing."}, status=401)
+        return JsonResponse({'logOutError': "Log out error. Try refreshing."}, status=401)
 
     BlacklistedJWT.objects.create(
         jwt=request.headers.get('Authorization'),
@@ -207,9 +207,9 @@ def buy_spin(request):
 
 def auto_log_in(request):
     if request.method != 'POST':
-        return JsonResponse({'authError': "Request error"}, status=400)
+        return JsonResponse({'autoLogInError': "Request error"}, status=400)
 
-    authentication = authenticate(request, 'authError', 'Authentication error')
+    authentication = authenticate(request, 'autoLogInError', 'Authentication error')
     if not authentication[0]: 
         return authentication[1]
     decoded = authentication[1] 
