@@ -117,15 +117,11 @@ def register(request):
 def log_out(request):
     if request.method != 'POST':
         return JsonResponse({'logOutError': "Request error"}, status=400) 
-    
-    try:
-        decoded = jwt.decode(
-            request.headers.get('Authorization'), 
-            JWT_SECRET, 
-            algorithms=['HS256']
-        )
-    except:
-        return JsonResponse({'logOutError': "Log out error. Try refreshing."}, status=401)
+
+    authentication = authenticate(request, 'logOutError', "Log out error. Try refreshing.")
+    if not authentication[0]: 
+        return authentication[1]
+    decoded = authentication[1] 
 
     BlacklistedJWT.objects.create(
         jwt=request.headers.get('Authorization'),
