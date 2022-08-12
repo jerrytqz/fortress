@@ -295,13 +295,13 @@ def fetch_profile(request):
 
     return JsonResponse(response)
 
-def free_sp(request):
+def get_free_sp(request):
     if request.method != 'GET':
-        return JsonResponse({'freeSPError': "Request error"}, status=400)
+        return JsonResponse({'getFreeSPError': "Request error"}, status=400)
 
     authentication = authenticate(
         request, 
-        'freeSPError', 
+        'getFreeSPError', 
         "Authentication error"
     )
     if not authentication[0]: 
@@ -319,7 +319,7 @@ def free_sp(request):
 
     timeLeft = int((FREE_SP_TIMEOUT - (time.time() - user.last_free_sp_time)) * 1000)
 
-    return JsonResponse({'freeSPError': timeLeft}, status=400)
+    return JsonResponse({'getFreeSPError': timeLeft}, status=400)
 
 def list_item(request):
     if request.method != 'POST':
