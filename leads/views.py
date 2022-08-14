@@ -148,7 +148,7 @@ def buy_spin(request):
     
     # Determine InventoryItem, add InventoryItem to inventory, and update
     # InventoryItem's Item's in_circulation
-    degree = 359.99
+    degree = random.random() * 360
     items = Item.objects.filter(rarity=map_degree_to_rarity(degree))
     index = random.randrange(items.count()) 
     obj, created = InventoryItem.objects.get_or_create(
