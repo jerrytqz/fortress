@@ -1,2 +1,2 @@
 # spin-backend
-Django backend for Spin
+Django backend for [Spin](https://github.com/JerryZhengPro/spin)
