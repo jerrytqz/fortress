@@ -26,6 +26,7 @@ urlpatterns = [
     path('auto-log-in/', views.auto_log_in, name='auto_log_in'),
     path('fetch-inventory/', views.fetch_inventory, name='fetch_inventory'),
     path('fetch-profile/', views.fetch_profile, name='fetch_profile'),
+    path('fetch-profile/<username>', views.fetch_profile, name='fetch_profile_username'),
     path('get-free-sp/', views.get_free_sp, name='get_free_sp'),
     path('list-item/', views.list_item, name='list_item'),
     path('fetch-market/', views.fetch_market, name='fetch_market'),

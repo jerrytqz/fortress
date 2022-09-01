@@ -218,7 +218,7 @@ def auto_log_in(request):
     })
 
 def fetch_inventory(request):
-    if request.method != 'GET':
+    if request.method != 'POST':
         return JsonResponse({'fetchInventoryError': "Request error"}, status=400)
 
     authentication = authenticate(request, 'fetchInventoryError', "Must be logged in...")
@@ -238,11 +238,10 @@ def fetch_inventory(request):
     
     return JsonResponse(response)
     
-def fetch_profile(request):
-    if request.method != 'POST':
+def fetch_profile(request, username=""):
+    if request.method != 'GET':
         return JsonResponse({'fetchProfileError': "Request error"}, status=400)
 
-    username = request.POST.get('username')
     if len(User.objects.filter(username=username)) != 1: 
         return JsonResponse({'fetchProfileError': "No such user..."}, status=400)
 
@@ -296,7 +295,7 @@ def fetch_profile(request):
     return JsonResponse(response)
 
 def get_free_sp(request):
-    if request.method != 'GET':
+    if request.method != 'POST':
         return JsonResponse({'getFreeSPError': "Request error"}, status=400)
 
     authentication = authenticate(
