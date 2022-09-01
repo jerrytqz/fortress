@@ -5,6 +5,7 @@ import math
 import requests 
 import os
 import importlib
+import string
 
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -67,18 +68,27 @@ def register(request):
     
     # Check if username is valid
     maxNameLength = User._meta.get_field('username').max_length
+    chosenUsername = request.POST.get('username')
 
-    if len(request.POST.get('username')) == 0 or len(request.POST.get('username')) > maxNameLength:
+    try:
+        chosenUsername.encode('ascii')
+    except UnicodeEncodeError:
+        return JsonResponse({'authError': "Username cannot contain illegal characters."}, status=400)
+
+    if len(chosenUsername) == 0 or len(chosenUsername) > maxNameLength:
         return JsonResponse(
             {'authError': """This username does not meet length requirements. 
                 Username lengths should be between 1 and {} inclusive.""".format(maxNameLength)},
             status=400
         )
 
+    if chosenUsername != chosenUsername.translate(str.maketrans('', '', string.whitespace)):
+        return JsonResponse({'authError': "No whitespace is allowed in usernames."}, status=400)
+
     for user in User.objects.all():
-        if request.POST.get('username') == user.username:
+        if chosenUsername == user.username:
             return JsonResponse({'authError': "This username is taken."}, status=400)
-    
+
     # Check if email is valid
     try:
         validate_email(request.POST.get('email'))
