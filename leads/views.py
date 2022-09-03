@@ -5,7 +5,7 @@ import math
 import requests 
 import os
 import importlib
-import string
+import re
 
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -75,15 +75,15 @@ def register(request):
     except UnicodeEncodeError:
         return JsonResponse({'authError': "Username cannot contain illegal characters."}, status=400)
 
+    if not re.match(r'^[a-zA-Z0-9_.-]*$', chosenUsername):
+        return JsonResponse({'authError': "Username can only contain letters, numbers, hyphens, underscores, and periods."}, status=400)
+
     if len(chosenUsername) == 0 or len(chosenUsername) > maxNameLength:
         return JsonResponse(
             {'authError': """This username does not meet length requirements. 
                 Username lengths should be between 1 and {} inclusive.""".format(maxNameLength)},
             status=400
         )
-
-    if chosenUsername != chosenUsername.translate(str.maketrans('', '', string.whitespace)):
-        return JsonResponse({'authError': "No whitespace is allowed in usernames."}, status=400)
 
     for user in User.objects.all():
         if chosenUsername == user.username:
@@ -248,15 +248,18 @@ def fetch_inventory(request):
     
     return JsonResponse(response)
     
-def fetch_profile(request, username=""):
+def fetch_profile(request):
     if request.method != 'GET':
         return JsonResponse({'fetchProfileError': "Request error"}, status=400)
 
-    if len(User.objects.filter(username=username)) != 1: 
+    givenUsername = request.GET.get('username', '')
+    print(givenUsername)
+
+    if len(User.objects.filter(username=givenUsername)) != 1: 
         return JsonResponse({'fetchProfileError': "No such user..."}, status=400)
 
     # Find stats 
-    user = User.objects.get(username=username)
+    user = User.objects.get(username=givenUsername)
     # totalSpinItems = Item.objects.all().count()
 
     # Find top 3 items according to rarity,
@@ -282,7 +285,7 @@ def fetch_profile(request, username=""):
 
     # Create response 
     response = {
-        'username': username, 
+        'username': givenUsername, 
         'stats': {
             'sp': user.sp,
             'netSP': user.net_sp, 
