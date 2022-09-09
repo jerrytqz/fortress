@@ -203,10 +203,11 @@ def buy_spin(request):
         requests.post(
             SOCKET_IO_BASE_DIR + 'item-unboxed', 
             headers={'Authorization': SOCKET_KEY},
-            json=body
+            json=body,
+            timeout=5
         )
     except Exception:
-        # Posting to Socket.io is not essential
+        # Posting to Socket.IO is not essential
         pass
 
     return JsonResponse(response)
@@ -393,10 +394,11 @@ def list_item(request):
         requests.post(
             SOCKET_IO_BASE_DIR + 'item-listed', 
             headers={'Authorization': SOCKET_KEY},
-            json=body
+            json=body,
+            timeout=5
         ) 
     except Exception:
-        # Posting to Socket.io is not essential
+        # Posting to Socket.IO is not essential
         pass
     
     return JsonResponse({})
@@ -468,10 +470,11 @@ def buy_item(request):
         requests.post(
             SOCKET_IO_BASE_DIR + 'item-bought', 
             headers={'Authorization': SOCKET_KEY},
-            data=body
+            data=body,
+            timeout=5
         )
     except Exception:
-        # Posting to Socket.io is not essential
+        # Posting to Socket.IO is not essential
         pass
 
     return JsonResponse({})
