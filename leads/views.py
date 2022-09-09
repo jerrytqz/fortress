@@ -8,7 +8,7 @@ import importlib
 import re
 
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.core.validators import validate_email
 from django.contrib.auth.hashers import make_password, check_password 
 from django.contrib.auth.password_validation import validate_password
@@ -34,6 +34,11 @@ from leads.utility import (
 )
 
 # Create your views here.
+
+def wake(request):
+    if not "identifier" in request.data:
+        return HttpResponse(status=400)
+    return HttpResponse(request.data['identifier'])
 
 def log_in(request):
     if request.method != 'POST':
@@ -254,7 +259,6 @@ def fetch_profile(request):
         return JsonResponse({'fetchProfileError': "Request error"}, status=400)
 
     givenUsername = request.GET.get('username', '')
-    print(givenUsername)
 
     if len(User.objects.filter(username=givenUsername)) != 1: 
         return JsonResponse({'fetchProfileError': "No such user..."}, status=400)

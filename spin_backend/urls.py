@@ -19,6 +19,7 @@ from leads import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('wake', views.wake, name='wake'),
     path('log-in/', views.log_in, name='log_in'),
     path('register/', views.register, name='register'),
     path('log-out/', views.log_out, name='log_out'),
