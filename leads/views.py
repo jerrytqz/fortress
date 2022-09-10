@@ -357,7 +357,7 @@ def list_item(request):
     
     user = User.objects.get(username=decoded['user'])
 
-    if user.sp - math.floor(int(request.POST.get('price'))/LIST_PRICE_PER_FEE) < 0:
+    if user.sp - math.floor(numPrice/LIST_PRICE_PER_FEE) < 0:
         return JsonResponse({'listItemError': "Not enough SP"}, status=400)
     
     try: 
@@ -375,13 +375,13 @@ def list_item(request):
     else:
         inventoryItem.delete()
 
-    user.sp -= math.floor(int(request.POST.get('price'))/LIST_PRICE_PER_FEE)
+    user.sp -= math.floor(numPrice/LIST_PRICE_PER_FEE)
     user.save()
 
     marketItem = MarketItem.objects.create(
         user=user, 
         item=inventoryItem.item, 
-        price=int(request.POST.get('price')), 
+        price=numPrice, 
         listTime=time.time()
     ) 
 
