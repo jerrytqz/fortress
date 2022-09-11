@@ -209,7 +209,7 @@ def buy_spin(request):
             SOCKET_IO_BASE_DIR + 'item-unboxed', 
             headers={'Authorization': SOCKET_KEY},
             json=body,
-            timeout=5
+            timeout=3
         )
     except Exception:
         # Posting to Socket.IO is not essential
@@ -399,7 +399,7 @@ def list_item(request):
             SOCKET_IO_BASE_DIR + 'item-listed', 
             headers={'Authorization': SOCKET_KEY},
             json=body,
-            timeout=5
+            timeout=3
         ) 
     except Exception:
         # Posting to Socket.IO is not essential
@@ -475,7 +475,7 @@ def buy_item(request):
             SOCKET_IO_BASE_DIR + 'item-bought', 
             headers={'Authorization': SOCKET_KEY},
             data=body,
-            timeout=5
+            timeout=3
         )
     except Exception:
         # Posting to Socket.IO is not essential
