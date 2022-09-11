@@ -18,15 +18,16 @@ LIST_PRICE_PER_FEE = 20
 
 RARITIES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Holy', 'Godly', '???']
 RARITY_TO_VALUE = {
-    'Common': 1,
-    'Uncommon': 2,
-    'Rare': 3,
-    'Epic': 4,
-    'Holy': 5,
-    'Godly': 6,
-    '???': 7
+    RARITIES[0]: 1,
+    RARITIES[1]: 2,
+    RARITIES[2]: 3,
+    RARITIES[3]: 4,
+    RARITIES[4]: 5,
+    RARITIES[5]: 6,
+    RARITIES[6]: 7
 }
 
+# Functions
 def map_degree_to_rarity(degree):
     if 0 <= degree and degree < 187.2:
         return RARITIES[0]

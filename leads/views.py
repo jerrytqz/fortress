@@ -33,8 +33,6 @@ from leads.utility import (
     authenticate
 )
 
-# Create your views here.
-
 def wake(request):
     if not "identifier" in request.data:
         return HttpResponse(status=400)
@@ -154,7 +152,7 @@ def buy_spin(request):
         return authentication[1]
     decoded = authentication[1] 
 
-    # Subtract SP 
+    # Subtract SP
     user = User.objects.get(username=decoded['user'])
     if user.sp - SPIN_PRICE < 0:
         return JsonResponse({'buySpinError': "Not enough SP"}, status=400)
@@ -185,11 +183,9 @@ def buy_spin(request):
         user.tq_unboxed += 1
     else: 
         user.__dict__['{}_unboxed'.format(item.rarity).lower()] += 1
-    # if created:
-    #     user.items_found += 1
     user.save()
 
-    # Create response 
+    # Create response
     response = {'degree': degree}
     response['item'] = {
         'name': "{}".format(item), 
@@ -263,12 +259,10 @@ def fetch_profile(request):
     if len(User.objects.filter(username=givenUsername)) != 1: 
         return JsonResponse({'fetchProfileError': "No such user..."}, status=400)
 
-    # Find stats 
-    user = User.objects.get(username=givenUsername)
-    # totalSpinItems = Item.objects.all().count()
-
-    # Find top 3 items according to rarity,
+    # Find stats by finding top 3 items according to rarity,
     # then lowest in_circulation, then quantity, then lowest id (oldest)
+    user = User.objects.get(username=givenUsername)
+
     showcaseItems = []
     inventoryItems = InventoryItem.objects.filter(user=user)
     for x in range(inventoryItems.count()):
@@ -288,15 +282,13 @@ def fetch_profile(request):
     while len(showcaseItems) < 3:
         showcaseItems.append("nothing")
 
-    # Create response 
+    # Create response
     response = {
         'username': givenUsername, 
         'stats': {
             'sp': user.sp,
             'netSP': user.net_sp, 
             'totalSpins': user.total_spins, 
-            # 'itemsFound': user.items_found, 
-            # 'totalSpinItems': totalSpinItems, 
             'rarityStats': {}
         }, 
         'showcaseItems': {

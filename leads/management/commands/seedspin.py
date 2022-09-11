@@ -30,5 +30,5 @@ class Command(BaseCommand):
                         item.in_circulation = 0
                         item.save()
                 except Exception as e:
-                    print("Failed in row {} with {}".format(i + 2, e)) # Header is row 1
+                    print("Failed in row {} with {}".format(i + 2, e)) # Define header as row 1
                     break

@@ -1,5 +1,4 @@
 from django.db import models
-# Create your models here.
 
 class User(models.Model):
     id = models.AutoField(primary_key=True)
@@ -12,7 +11,6 @@ class User(models.Model):
     sp = models.IntegerField(default=0)
     net_sp = models.IntegerField(default=0)
     total_spins = models.IntegerField(default=0)
-    items_found = models.IntegerField(default=0)
     common_unboxed = models.IntegerField(default=0)
     uncommon_unboxed = models.IntegerField(default=0)
     rare_unboxed = models.IntegerField(default=0)

@@ -47,7 +47,6 @@ class InventoryItemAdmin(admin.ModelAdmin):
 class MarketItemAdmin(admin.ModelAdmin):
     readonly_fields = ('id',)
 
-# Register your models here.
 admin.site.register(User, UserAdmin)
 admin.site.register(BlacklistedJWT, BlacklistedJWTAdmin)
 admin.site.register(Item, ItemAdmin)
