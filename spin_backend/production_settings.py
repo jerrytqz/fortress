@@ -8,7 +8,7 @@ import django_heroku
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SOCKET_IO_BASE_DIR = 'https://spin-socketio.jerrytq.com/'
+SOCKET_IO_BASE_DIR = 'https://spin-socketio.jerrytq.com'
 
 SECRET_KEY = os.environ['SECRET_KEY']
 

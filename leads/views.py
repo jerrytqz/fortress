@@ -202,7 +202,7 @@ def buy_spin(request):
     }
     try:
         requests.post(
-            SOCKET_IO_BASE_DIR + 'item-unboxed', 
+            SOCKET_IO_BASE_DIR + '/item-unboxed', 
             headers={'Authorization': SOCKET_KEY},
             json=body,
             timeout=3
@@ -388,7 +388,7 @@ def list_item(request):
     }
     try:
         requests.post(
-            SOCKET_IO_BASE_DIR + 'item-listed', 
+            SOCKET_IO_BASE_DIR + '/item-listed', 
             headers={'Authorization': SOCKET_KEY},
             json=body,
             timeout=3
@@ -464,7 +464,7 @@ def buy_item(request):
     }
     try:
         requests.post(
-            SOCKET_IO_BASE_DIR + 'item-bought', 
+            SOCKET_IO_BASE_DIR + '/item-bought', 
             headers={'Authorization': SOCKET_KEY},
             data=body,
             timeout=3
