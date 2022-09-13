@@ -34,9 +34,9 @@ from leads.utility import (
 )
 
 def wake(request):
-    if not "identifier" in request.data:
+    if not "identifier" in request.POST:
         return HttpResponse(status=400)
-    return HttpResponse(request.data['identifier'])
+    return HttpResponse(request.POST.get('identifier'))
 
 def log_in(request):
     if request.method != 'POST':

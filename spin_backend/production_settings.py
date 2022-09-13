@@ -14,7 +14,7 @@ SECRET_KEY = os.environ['SECRET_KEY']
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['spin-backend-production.herokuapp.com/']
+ALLOWED_HOSTS = ['spin-backend-production.herokuapp.com']
 
 
 # Application definition
