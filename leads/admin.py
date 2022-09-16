@@ -1,27 +1,34 @@
 import time
 
+from django import forms
+from django.contrib.admin.helpers import ActionForm
 from django.contrib import admin
 from leads.models import User, BlacklistedJWT, Item, InventoryItem, MarketItem
 
+class AddSPForm(ActionForm):
+    SP = forms.IntegerField(label='SP')
+
 class UserAdmin(admin.ModelAdmin):
-    def add_100k_sp(self, request, queryset):
+    def add_sp(self, request, queryset):
         for x in range(queryset.count()):
             obj = User.objects.get(username=queryset[x].username)
-            obj.sp += 100000
-            obj.net_sp += 100000
+            obj.sp += int(request.POST.get('SP'))
+            obj.net_sp += int(request.POST.get('SP'))
             obj.save()
     
-    actions = [add_100k_sp]
-    add_100k_sp.short_description = "Add 100,000 SP to selected users"
+    action_form = AddSPForm
+    actions = [add_sp]
+    add_sp.short_description = "Add a specified amount of SP to selected users"
 
 class ItemAdmin(admin.ModelAdmin): 
     def update_circulation(self, request, queryset): 
         for x in range(queryset.count()):
             obj = Item.objects.get(name=queryset[x].name)
             circulationNum = 0
-            circulation = InventoryItem.objects.filter(item=obj)
-            for y in range(circulation.count()):
-                circulationNum += circulation[y].quantity
+            circulationInv = InventoryItem.objects.filter(item=obj)
+            for y in range(circulationInv.count()):
+                circulationNum += circulationInv[y].quantity
+            circulationNum += MarketItem.objects.filter(item=obj).count()
             obj.in_circulation = circulationNum
             obj.save()
 
