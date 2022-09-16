@@ -30,6 +30,10 @@ class BlacklistedJWT(models.Model):
 
     def __str__(self):
         return self.jwt
+    
+    class Meta:
+        verbose_name = 'blacklisted JWT'
+        verbose_name_plural = 'blacklisted JWTs'
 
 class Item(models.Model): 
     id = models.AutoField(primary_key=True)
@@ -68,7 +72,7 @@ class MarketItem(models.Model):
 
     def __str__(self):
         return self.user.username + ' | ' + self.item.name + ' | ' + str(
-            self.price)
+            self.price) + ' SP'
 
     class Meta: 
         ordering = ['user', 'item', 'price']
