@@ -3,11 +3,12 @@ spin_backend URL Configuration
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from leads import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('jerrytq/', include('jerrytq.urls')),
     path('wake', views.wake, name='wake'),
     path('log-in/', views.log_in, name='log_in'),
     path('register/', views.register, name='register'),
