@@ -1,1 +1,1 @@
-web: gunicorn spin_backend.wsgi --log-file -
+web: gunicorn fortress.wsgi --log-file -

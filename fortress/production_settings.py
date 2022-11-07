@@ -1,5 +1,5 @@
 """
-Django settings for spin_backend project in production
+Django settings for fortress project in production
 """
 
 import os
@@ -14,7 +14,7 @@ SECRET_KEY = os.environ['SECRET_KEY']
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['spin-backend-production.herokuapp.com']
+ALLOWED_HOSTS = ['fortress-jerrytq.herokuapp.com']
 
 
 # Application definition
@@ -44,7 +44,7 @@ MIDDLEWARE = [
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
 
-ROOT_URLCONF = 'spin_backend.urls'
+ROOT_URLCONF = 'fortress.urls'
 
 TEMPLATES = [
     {
@@ -62,7 +62,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'spin_backend.wsgi.application'
+WSGI_APPLICATION = 'fortress.wsgi.application'
 
 
 # Database

@@ -1,2 +1,2 @@
-# spin-backend
-Django backend for [Spin](https://github.com/jerrytqz/spin)
+# fortress
+Django backend for [jerrytq.com](https://jerrytq.com) and its subdomains

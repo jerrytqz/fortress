@@ -1,7 +1,7 @@
 .vscode
 __pycache__
-spin_backend_env
+fortress_env
 
-spin_backend/development_settings.py
+fortress/development_settings.py
 db.sqlite3
 TODO
