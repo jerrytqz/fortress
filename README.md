@@ -1,2 +1,2 @@
 # fortress
-Django backend API and database for [jerrytq.com](https://jerrytq.com) and its subdomains
+API and database built with Django for [jerrytq.com](https://jerrytq.com) and its subdomains
