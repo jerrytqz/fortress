@@ -14,7 +14,7 @@ SECRET_KEY = os.environ['SECRET_KEY']
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['fortress-jerrytq.herokuapp.com']
+ALLOWED_HOSTS = ['.jerrytq.com']
 
 
 # Application definition
@@ -115,7 +115,10 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Others
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = ['https://spin.jerrytq.com']
+CORS_ORIGIN_WHITELIST = [
+    'https://jerrytq.com',
+    'https://spin.jerrytq.com'
+]
 
 JWT_SECRET = os.environ['JWT_SECRET']
 SOCKET_KEY = os.environ['SOCKET_KEY']
