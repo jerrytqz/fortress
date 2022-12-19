@@ -31,15 +31,16 @@ class ProjectLink(models.Model):
 
 class Project(models.Model):
     name = models.CharField(unique=True, max_length=32)
-    url_name = models.CharField(max_length=32, default="")
+    url_name = models.CharField(unique=True, max_length=32)
     credits = models.ManyToManyField(ProjectCredit)
     start_date = models.DateField()
     image_links = models.ManyToManyField(ImageLink)
     description = models.TextField(default="")
     project_links = models.ManyToManyField(ProjectLink)
+    order = models.PositiveIntegerField(default=0, blank=False, null=False)
 
     def __str__(self):
         return self.name
 
     class Meta: 
-        ordering = ['name']
+        ordering = ['order']
