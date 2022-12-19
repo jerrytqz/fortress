@@ -31,7 +31,7 @@ class ProjectLink(models.Model):
 
 class Project(models.Model):
     name = models.CharField(unique=True, max_length=32)
-    url_name = models.CharField(unique=True, max_length=32, default="")
+    url_name = models.CharField(unique=True, max_length=32, default=name)
     credits = models.ManyToManyField(ProjectCredit)
     start_date = models.DateField()
     image_links = models.ManyToManyField(ImageLink)
