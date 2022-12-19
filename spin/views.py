@@ -33,11 +33,6 @@ from spin.utility import (
     authenticate
 )
 
-def wake(request):
-    if not "identifier" in request.POST:
-        return HttpResponse(status=400)
-    return HttpResponse(request.POST.get('identifier'))
-
 def log_in(request):
     if request.method != 'POST':
         return JsonResponse({'authError': "Request error"}, status=400)
