@@ -10,7 +10,7 @@ def fetch_project_names(request):
     response = []
 
     for project in Project.objects.all():
-        response.append({'name': project.name, 'urlName': project.url_name})
+        response.append({'name': project.name, 'slug': project.slug})
 
     return JsonResponse({'projectNames': response})
 
@@ -18,9 +18,9 @@ def fetch_project(request):
     if request.method != 'GET':
         return JsonResponse({'error': "Request error"}, status=400)
     
-    project_url_name = request.GET.get('urlName', '')
+    project_slug = request.GET.get('slug', '')
 
-    if not Project.objects.filter(url_name=project_url_name).exists():
-        return JsonResponse({'error': "There are currently no projects with that name."}, status=404);
+    if not Project.objects.filter(slug=project_slug).exists():
+        return JsonResponse({'error': "There are currently no projects with that name."}, status=404)
     
-    return JsonResponse({'hello': 'world'});
+    return JsonResponse({'hello': 'world'})

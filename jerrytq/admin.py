@@ -7,7 +7,8 @@ class ProjectCreditAdmin(admin.ModelAdmin):
     pass
 
 class ProjectAdmin(SortableAdminMixin, admin.ModelAdmin):
-    filter_horizontal = ('credits', 'image_links', 'project_links',)
+    prepopulated_fields = {'slug': ['name']}
+    filter_horizontal = ('credits', 'image_links', 'project_links')
 
 class ImageLinkAdmin(admin.ModelAdmin):
     pass
