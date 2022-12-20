@@ -5,7 +5,7 @@ import importlib
 from spin.models import BlacklistedJWT
 from django.http import JsonResponse
 settings = importlib.import_module(os.environ['DJANGO_SETTINGS_MODULE'])
-JWT_SECRET = settings.JWT_SECRET
+SPIN_JWT_SECRET = settings.SPIN_JWT_SECRET
 
 # Constants
 SPIN_PRICE = 500
@@ -51,7 +51,7 @@ def authenticate(request, errorName, errorMessage):
     try:
         decoded = jwt.decode(
             request.headers.get('Authorization'), 
-            JWT_SECRET, 
+            SPIN_JWT_SECRET, 
             algorithms=['HS256']
         )
     except:

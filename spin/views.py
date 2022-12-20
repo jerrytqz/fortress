@@ -14,9 +14,9 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 settings = importlib.import_module(os.environ['DJANGO_SETTINGS_MODULE'])
-JWT_SECRET = settings.JWT_SECRET
-SOCKET_IO_BASE_DIR = settings.SOCKET_IO_BASE_DIR
-SOCKET_KEY = settings.SOCKET_KEY
+SPIN_JWT_SECRET = settings.SPIN_JWT_SECRET
+SPIN_SOCKET_BASE_DIR = settings.SPIN_SOCKET_BASE_DIR
+SPIN_SOCKET_KEY = settings.SPIN_SOCKET_KEY
 
 from spin.models import User, BlacklistedJWT, InventoryItem, Item, MarketItem
 from spin.utility import (
@@ -49,7 +49,7 @@ def log_in(request):
     
     encoded = jwt.encode(
         {'user': user.username, 'exp': time.time() + JWT_EXPIRATION_TIME}, 
-        JWT_SECRET, 
+        SPIN_JWT_SECRET, 
         algorithm='HS256'
     )
 
@@ -111,7 +111,7 @@ def register(request):
 
     encoded = jwt.encode(
         {'user': user.username, 'exp': time.time() + JWT_EXPIRATION_TIME}, 
-        JWT_SECRET, 
+        SPIN_JWT_SECRET, 
         algorithm='HS256'
     )
     
@@ -197,8 +197,8 @@ def buy_spin(request):
     }
     try:
         requests.post(
-            SOCKET_IO_BASE_DIR + '/item-unboxed', 
-            headers={'Authorization': SOCKET_KEY},
+            SPIN_SOCKET_BASE_DIR + '/item-unboxed', 
+            headers={'Authorization': SPIN_SOCKET_KEY},
             json=body,
             timeout=3
         )
@@ -383,8 +383,8 @@ def list_item(request):
     }
     try:
         requests.post(
-            SOCKET_IO_BASE_DIR + '/item-listed', 
-            headers={'Authorization': SOCKET_KEY},
+            SPIN_SOCKET_BASE_DIR + '/item-listed', 
+            headers={'Authorization': SPIN_SOCKET_KEY},
             json=body,
             timeout=3
         ) 
@@ -459,8 +459,8 @@ def buy_item(request):
     }
     try:
         requests.post(
-            SOCKET_IO_BASE_DIR + '/item-bought', 
-            headers={'Authorization': SOCKET_KEY},
+            SPIN_SOCKET_BASE_DIR + '/item-bought', 
+            headers={'Authorization': SPIN_SOCKET_KEY},
             data=body,
             timeout=3
         )

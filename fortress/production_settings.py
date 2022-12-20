@@ -8,9 +8,11 @@ import django_heroku
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SOCKET_IO_BASE_DIR = 'https://spin-socketio.jerrytq.com'
+SPIN_SOCKET_BASE_DIR = 'https://spin-socketio.jerrytq.com'
 
 SECRET_KEY = os.environ['SECRET_KEY']
+SPIN_JWT_SECRET = os.environ['SPIN_JWT_SECRET']
+SPIN_SOCKET_KEY = os.environ['SPIN_SOCKET_KEY']
 
 DEBUG = False
 
@@ -19,6 +21,8 @@ ALLOWED_HOSTS = ['.jerrytq.com']
 
 # Application definition
 INSTALLED_APPS = [
+    'spin',
+    'jerrytq',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -27,8 +31,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'adminsortable2',
-    'spin',
-    'jerrytq'
 ]
 
 MIDDLEWARE = [
@@ -120,8 +122,5 @@ CORS_ORIGIN_WHITELIST = [
     'https://jerrytq.com',
     'https://spin.jerrytq.com'
 ]
-
-JWT_SECRET = os.environ['JWT_SECRET']
-SOCKET_KEY = os.environ['SOCKET_KEY']
 
 django_heroku.settings(locals())
