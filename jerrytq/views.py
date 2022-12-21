@@ -20,7 +20,16 @@ def fetch_project(request):
     
     project_slug = request.GET.get('slug', '')
 
-    if not Project.objects.filter(slug=project_slug).exists():
+    project = Project.objects.filter(slug=project_slug).first()
+
+    if not project: 
         return JsonResponse({'error': "There are currently no projects with that name."}, status=404)
-    
-    return JsonResponse({'hello': 'world'})
+        
+    return JsonResponse({'project': {
+        'name': project.name,
+        'credits': [credit.name for credit in project.credits.all()],
+        'startDate': str(project.start_date),
+        'imageLinks': [{'url': link.url, 'alt': link.name} for link in project.image_links.all()],
+        'description': project.description,
+        'projectLinks': {link.type: link.url for link in project.project_links.all()}
+    }})

@@ -20,8 +20,16 @@ class ProjectCredit(models.Model):
         ordering = ['name']
 
 class ProjectLink(models.Model):
+    WEBSITE = 'WEB'
+    GITHUB = 'GIT'
+    LINK_TYPE_CHOICES = [
+        (WEBSITE, 'Website'),
+        (GITHUB, 'GitHub')
+    ]
+
     name = models.CharField(max_length=32)
-    url = models.URLField()  
+    url = models.URLField()
+    type = models.CharField(max_length=3, choices=LINK_TYPE_CHOICES, default=WEBSITE) 
 
     def __str__(self):
         return self.name
@@ -31,7 +39,7 @@ class ProjectLink(models.Model):
 
 class Project(models.Model):
     name = models.CharField(unique=True, max_length=32)
-    slug = models.SlugField(null=False, default="")
+    slug = models.SlugField(unique=True, null=False)
     credits = models.ManyToManyField(ProjectCredit)
     start_date = models.DateField()
     image_links = models.ManyToManyField(ImageLink)
