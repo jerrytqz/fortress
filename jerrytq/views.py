@@ -31,5 +31,6 @@ def fetch_project(request):
         'startDate': str(project.start_date),
         'imageLinks': [{'url': link.url, 'alt': link.name} for link in project.image_links.all()],
         'description': project.description,
-        'projectLinks': {link.type: link.url for link in project.project_links.all()}
+        'projectLinks': {link.type: link.url for link in project.project_links.all()},
+        'technologies': [{'name': tech.name, 'imageLink': {'url': tech.image_link.url, 'alt': tech.image_link.name}} for tech in project.technologies.all()]
     }})
