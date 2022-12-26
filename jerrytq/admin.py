@@ -1,5 +1,5 @@
 from django.contrib import admin
-from adminsortable2.admin import SortableAdminMixin
+from adminsortable2.admin import SortableAdminMixin, SortableTabularInline
 
 from jerrytq import models
 
@@ -18,9 +18,26 @@ class TechnologyAdmin(admin.ModelAdmin):
 class SkillAdmin(admin.ModelAdmin):
     pass
 
+class ProjectCreditToProjectInline(SortableTabularInline, admin.TabularInline):
+    model = models.Project.project_credits.through
+    verbose_name = 'project credit'
+    extra = 1
+
+class ImageLinkToProjectInline(SortableTabularInline, admin.TabularInline):
+    model = models.Project.image_links.through
+    verbose_name = 'image link'
+    extra = 1
+
+class TechnologyToProjectInline(SortableTabularInline, admin.TabularInline):
+    model = models.Project.technologies.through
+    verbose_name = 'technology'
+    verbose_name_plural = 'technologies'
+    extra = 1
+
 class ProjectAdmin(SortableAdminMixin, admin.ModelAdmin):
     prepopulated_fields = {'slug': ['name']}
-    filter_horizontal = ('credits', 'image_links', 'project_links', 'technologies')
+    filter_horizontal = ('project_links',)
+    inlines = (ProjectCreditToProjectInline, ImageLinkToProjectInline, TechnologyToProjectInline)
 
 admin.site.register(models.ImageLink, ImageLinkAdmin)
 admin.site.register(models.ProjectCredit, ProjectCreditAdmin)

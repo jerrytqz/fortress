@@ -82,16 +82,58 @@ class Skill(models.Model):
 class Project(models.Model):
     name = models.CharField(unique=True, max_length=32)
     slug = models.SlugField(unique=True, null=False)
-    credits = models.ManyToManyField(ProjectCredit)
+    project_credits = models.ManyToManyField(
+        ProjectCredit, 
+        through='ProjectCreditToProject'
+    )
     start_date = models.DateField()
-    image_links = models.ManyToManyField(ImageLink)
+    image_links = models.ManyToManyField(
+        ImageLink,
+        through='ImageLinkToProject'
+    )
     description = models.TextField(default="")
     project_links = models.ManyToManyField(ProjectLink)
+    technologies = models.ManyToManyField(
+        Technology,
+        through='TechnologyToProject'
+    )
     order = models.PositiveIntegerField(default=0, blank=False, null=False)
-    technologies = models.ManyToManyField(Technology)
-
+    
     def __str__(self):
         return self.name
+
+    class Meta: 
+        ordering = ['order']
+
+class TechnologyToProject(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    technology = models.ForeignKey(Technology, on_delete=models.CASCADE)
+    order = models.PositiveIntegerField(default=0, blank=False, null=False)
+
+    def __str__(self):
+        return f"{self.project.name}: {self.technology.name}"
+
+    class Meta: 
+        ordering = ['order']
+
+class ImageLinkToProject(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    image_link = models.ForeignKey(ImageLink, on_delete=models.CASCADE)
+    order = models.PositiveIntegerField(default=0, blank=False, null=False)
+
+    def __str__(self):
+        return f"{self.project.name}: {self.image_link.name}"
+
+    class Meta: 
+        ordering = ['order']
+
+class ProjectCreditToProject(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    project_credit = models.ForeignKey(ProjectCredit, on_delete=models.CASCADE)
+    order = models.PositiveIntegerField(default=0, blank=False, null=False)
+
+    def __str__(self):
+        return f"{self.project.name}: {self.project_credit.name}"
 
     class Meta: 
         ordering = ['order']
