@@ -21,18 +21,18 @@ class SkillAdmin(admin.ModelAdmin):
 class ProjectCreditToProjectInline(SortableTabularInline, admin.TabularInline):
     model = models.Project.project_credits.through
     verbose_name = 'project credit'
-    extra = 1
+    extra = 0
 
 class ImageLinkToProjectInline(SortableTabularInline, admin.TabularInline):
     model = models.Project.image_links.through
     verbose_name = 'image link'
-    extra = 1
+    extra = 0
 
 class TechnologyToProjectInline(SortableTabularInline, admin.TabularInline):
     model = models.Project.technologies.through
     verbose_name = 'technology'
     verbose_name_plural = 'technologies'
-    extra = 1
+    extra = 0
 
 class ProjectAdmin(SortableAdminMixin, admin.ModelAdmin):
     prepopulated_fields = {'slug': ['name']}

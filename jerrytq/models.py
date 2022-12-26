@@ -42,11 +42,13 @@ class Technology(models.Model):
     FRAMEWORK = 'FRA'
     LIBRARY = 'LIB'
     TOOL = 'TOO'
+    PLATFORM = 'PLA'
     TECH_TYPE_CHOICES = [
         (LANGUAGE, 'Language'),
         (FRAMEWORK, 'Framework'),
         (LIBRARY, 'Library'),
-        (TOOL, 'Tool')
+        (TOOL, 'Tool'),
+        (PLATFORM, 'Platform')
     ]
 
     name = models.CharField(unique=True, max_length=32)
