@@ -1,7 +1,7 @@
 from django.db import models
 
 class ImageLink(models.Model):
-    name = models.CharField(max_length=32)
+    name = models.CharField(unique=True, max_length=64)
     url = models.URLField()
 
     def __str__(self):
@@ -27,7 +27,7 @@ class ProjectLink(models.Model):
         (GITHUB, 'GitHub')
     ]
 
-    name = models.CharField(max_length=32)
+    name = models.CharField(unique=True, max_length=32)
     url = models.URLField()
     type = models.CharField(max_length=3, choices=LINK_TYPE_CHOICES, default=WEBSITE) 
 
