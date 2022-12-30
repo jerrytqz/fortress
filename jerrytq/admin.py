@@ -6,12 +6,6 @@ from jerrytq import models
 class ImageLinkAdmin(admin.ModelAdmin):
     pass
 
-class ProjectCreditAdmin(admin.ModelAdmin):
-    pass
-
-class ProjectLinkAdmin(admin.ModelAdmin):
-    pass
-
 class TechnologyAdmin(admin.ModelAdmin):
     pass
 
@@ -39,9 +33,16 @@ class ProjectAdmin(SortableAdminMixin, admin.ModelAdmin):
     filter_horizontal = ('project_links',)
     inlines = (ProjectCreditToProjectInline, ImageLinkToProjectInline, TechnologyToProjectInline)
 
+class TermAdmin(admin.ModelAdmin):
+    def get_model_perms(self, request):
+        return {}
+
+class CourseAdmin(SortableAdminMixin, admin.ModelAdmin):
+    pass
+
 admin.site.register(models.ImageLink, ImageLinkAdmin)
-admin.site.register(models.ProjectCredit, ProjectCreditAdmin)
-admin.site.register(models.ProjectLink, ProjectLinkAdmin)
 admin.site.register(models.Technology, TechnologyAdmin)
 admin.site.register(models.Skill, SkillAdmin)
 admin.site.register(models.Project, ProjectAdmin)
+admin.site.register(models.Term, TermAdmin)
+admin.site.register(models.Course, CourseAdmin)

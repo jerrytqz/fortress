@@ -3,5 +3,6 @@ from jerrytq import views
 
 urlpatterns = [
     path('fetch-project-names/', views.fetch_project_names, name='fetch_project_names'),
-    path('fetch-project/', views.fetch_project, name='fetch_project')
+    path('fetch-project/', views.fetch_project, name='fetch_project'),
+    path('fetch-courses/', views.fetch_courses, name='fetch_courses')
 ]

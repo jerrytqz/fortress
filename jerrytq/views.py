@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 
-from jerrytq.models import Project
+from jerrytq.models import Project, Course
 
 def fetch_project_names(request):
     if request.method != 'GET':
@@ -34,3 +34,21 @@ def fetch_project(request):
         'projectLinks': {link.type: link.url for link in project.project_links.all()},
         'technologies': [{'name': tech.name, 'imageLink': {'url': tech.image_link.url, 'alt': tech.image_link.name}} for tech in project.technologies.all().order_by('technologytoproject')]
     }})
+
+def fetch_courses(request):
+    if request.method != 'GET':
+        return JsonResponse({'error': "Request error"}, status=400)
+
+    term_name = request.GET.get('termName', '')
+
+    courses = Course.objects.filter(term__name=term_name)
+
+    if not courses:
+        return JsonResponse({'error': "No courses were found for that term."}, status=404)
+
+    return JsonResponse({'courses': [{
+        'term': {'name': course.term.name, 'period': course.term.period},
+        'name': course.name,
+        'description': course.description,
+        'grade': course.grade
+    } for course in courses]})

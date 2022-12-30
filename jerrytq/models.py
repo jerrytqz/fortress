@@ -139,3 +139,23 @@ class ProjectCreditToProject(models.Model):
 
     class Meta: 
         ordering = ['order']
+
+class Term(models.Model):
+    name = models.CharField(unique=True, max_length=4)
+    period = models.CharField(max_length=16)
+
+    def __str__(self):
+        return f"{self.name} ({self.period})"
+
+class Course(models.Model):
+    term = models.ForeignKey(Term, on_delete=models.CASCADE)
+    name = models.CharField(unique=True, max_length=16)
+    description = models.CharField(max_length=64)
+    grade = models.PositiveSmallIntegerField(blank=True, null=True)
+    order = models.PositiveIntegerField(default=0, blank=False, null=False)
+
+    def __str__(self):
+        return f"({self.term.name}) {self.name} {self.description}"
+
+    class Meta: 
+        ordering = ['order']
