@@ -49,6 +49,5 @@ def fetch_courses(request):
     return JsonResponse({'courses': [{
         'term': {'name': course.term.name, 'period': course.term.period},
         'name': course.name,
-        'description': course.description,
-        'grade': course.grade
+        'description': course.description
     } for course in courses]})

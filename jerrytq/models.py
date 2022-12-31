@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MaxValueValidator
 
 class ImageLink(models.Model):
     name = models.CharField(unique=True, max_length=64)
@@ -151,7 +152,9 @@ class Course(models.Model):
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     name = models.CharField(unique=True, max_length=16)
     description = models.CharField(max_length=64)
-    grade = models.PositiveSmallIntegerField(blank=True, null=True)
+    grade = models.PositiveSmallIntegerField(blank=True, null=True, validators=[
+        MaxValueValidator(100)
+    ])
     order = models.PositiveIntegerField(default=0, blank=False, null=False)
 
     def __str__(self):
