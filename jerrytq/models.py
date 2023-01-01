@@ -75,12 +75,13 @@ class Skill(models.Model):
 
     technology = models.OneToOneField(Technology, on_delete=models.CASCADE, null=True)
     proficiency = models.CharField(max_length=3, choices=PROFICIENCY_CHOICES, default=BASIC)
+    order = models.PositiveIntegerField(default=0, blank=False, null=False)
 
     def __str__(self):
-        return self.technology.name
+        return f"{self.technology.name} ({self.technology.get_type_display()})"
 
     class Meta: 
-        ordering = ['technology__name']
+        ordering = ['order']
 
 class Project(models.Model):
     name = models.CharField(unique=True, max_length=32)

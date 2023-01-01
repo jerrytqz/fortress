@@ -9,7 +9,7 @@ class ImageLinkAdmin(admin.ModelAdmin):
 class TechnologyAdmin(admin.ModelAdmin):
     pass
 
-class SkillAdmin(admin.ModelAdmin):
+class SkillAdmin(SortableAdminMixin, admin.ModelAdmin):
     pass
 
 class ProjectCreditToProjectInline(SortableTabularInline, admin.TabularInline):
