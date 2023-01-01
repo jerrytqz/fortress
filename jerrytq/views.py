@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 
-from jerrytq.models import Project, Course
+from jerrytq.models import Project, Course, Technology, Skill
 
 def fetch_project_names(request):
     if request.method != 'GET':
@@ -23,16 +23,69 @@ def fetch_project(request):
     project = Project.objects.filter(slug=project_slug).first()
 
     if not project: 
-        return JsonResponse({'error': "There are currently no projects with that name."}, status=404)
+        return JsonResponse({'error': "There are no projects with that name."}, status=404)
         
     return JsonResponse({'project': {
         'name': project.name,
-        'projectCredits': [credit.name for credit in project.project_credits.all().order_by('projectcredittoproject')],
+        'projectCredits': [
+            cred.name for cred in project.project_credits.all().order_by('projectcredittoproject')
+        ],
         'startDate': str(project.start_date),
-        'imageLinks': [{'url': link.url, 'alt': link.name} for link in project.image_links.all().order_by('imagelinktoproject')],
+        'imageLinks': [{
+            'url': link.url, 
+            'alt': link.name
+        } for link in project.image_links.all().order_by('imagelinktoproject')],
         'description': project.description,
         'projectLinks': {link.type: link.url for link in project.project_links.all()},
-        'technologies': [{'name': tech.name, 'imageLink': {'url': tech.image_link.url, 'alt': tech.image_link.name}} for tech in project.technologies.all().order_by('technologytoproject')]
+        'technologies': [{
+            'name': tech.name, 
+            'imageLink': {
+                'url': tech.image_link.url, 
+                'alt': tech.image_link.name
+            }
+        } for tech in project.technologies.all().order_by('technologytoproject')]
+    }})
+
+def fetch_skills(request):
+    if request.method != 'GET':
+        return JsonResponse({'error': "Request error"}, status=400)
+    
+    return JsonResponse({'skills': {
+        'languages': [{
+            'name': skill.technology.name, 
+            'imageLink': {
+                'url': skill.technology.image_link.url, 
+                'alt': skill.technology.image_link.name
+            }
+        } for skill in Skill.objects.filter(technology__type=Technology.LANGUAGE)],
+        'frameworks': [{
+            'name': skill.technology.name, 
+            'imageLink': {
+                'url': skill.technology.image_link.url, 
+                'alt': skill.technology.image_link.name
+            }
+        } for skill in Skill.objects.filter(technology__type=Technology.FRAMEWORK)],
+        'libraries': [{
+            'name': skill.technology.name, 
+            'imageLink': {
+                'url': skill.technology.image_link.url, 
+                'alt': skill.technology.image_link.name
+            }
+        } for skill in Skill.objects.filter(technology__type=Technology.LIBRARY)],
+        'tools': [{
+            'name': skill.technology.name, 
+            'imageLink': {
+                'url': skill.technology.image_link.url, 
+                'alt': skill.technology.image_link.name
+            }
+        } for skill in Skill.objects.filter(technology__type=Technology.TOOL)],
+        'platforms': [{
+            'name': skill.technology.name, 
+            'imageLink': {
+                'url': skill.technology.image_link.url, 
+                'alt': skill.technology.image_link.name
+            }
+        } for skill in Skill.objects.filter(technology__type=Technology.PLATFORM)]
     }})
 
 def fetch_courses(request):
