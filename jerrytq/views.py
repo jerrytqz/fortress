@@ -53,6 +53,7 @@ def fetch_skills(request):
     return JsonResponse({'skills': {
         'languages': [{
             'name': skill.technology.name, 
+            'proficiency': skill.get_proficiency_display(),
             'imageLink': {
                 'url': skill.technology.image_link.url, 
                 'alt': skill.technology.image_link.name
@@ -60,6 +61,7 @@ def fetch_skills(request):
         } for skill in Skill.objects.filter(technology__type=Technology.LANGUAGE)],
         'frameworks': [{
             'name': skill.technology.name, 
+            'proficiency': skill.get_proficiency_display(),
             'imageLink': {
                 'url': skill.technology.image_link.url, 
                 'alt': skill.technology.image_link.name
@@ -67,6 +69,7 @@ def fetch_skills(request):
         } for skill in Skill.objects.filter(technology__type=Technology.FRAMEWORK)],
         'libraries': [{
             'name': skill.technology.name, 
+            'proficiency': skill.get_proficiency_display(),
             'imageLink': {
                 'url': skill.technology.image_link.url, 
                 'alt': skill.technology.image_link.name
@@ -74,6 +77,7 @@ def fetch_skills(request):
         } for skill in Skill.objects.filter(technology__type=Technology.LIBRARY)],
         'tools': [{
             'name': skill.technology.name, 
+            'proficiency': skill.get_proficiency_display(),
             'imageLink': {
                 'url': skill.technology.image_link.url, 
                 'alt': skill.technology.image_link.name
@@ -81,6 +85,7 @@ def fetch_skills(request):
         } for skill in Skill.objects.filter(technology__type=Technology.TOOL)],
         'platforms': [{
             'name': skill.technology.name, 
+            'proficiency': skill.get_proficiency_display(),
             'imageLink': {
                 'url': skill.technology.image_link.url, 
                 'alt': skill.technology.image_link.name
