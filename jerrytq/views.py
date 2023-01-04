@@ -1,7 +1,9 @@
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.core.mail import send_mail
 
 from jerrytq.models import Project, Course, Technology, Skill
+from jerrytq.forms import ContactForm
 
 def fetch_project_names(request):
     if request.method != 'GET':
@@ -109,3 +111,18 @@ def fetch_courses(request):
         'name': course.name,
         'description': course.description
     } for course in courses]})
+
+def contact(request):
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            sender_name = form.cleaned_data['sender_name']
+            sender_email = form.cleaned_data['sender_email']
+            subject = form.cleaned_data['subject']
+            message = form.cleaned_data['message']
+            return JsonResponse({})
+        else:
+            return JsonResponse({'form': form.as_div()}, status=400)
+    else:
+        form = ContactForm()
+        return JsonResponse({'form': form.as_div()})
