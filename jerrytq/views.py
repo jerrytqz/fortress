@@ -1,6 +1,13 @@
+import os
+import importlib
+
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.core.mail import send_mail
+from django.contrib.auth.models import User as AdminUser
+from django.template.loader import render_to_string
+from django.utils import timezone
+settings = importlib.import_module(os.environ['DJANGO_SETTINGS_MODULE'])
 
 from jerrytq.models import Project, Course, Technology, Skill
 from jerrytq.forms import ContactForm
@@ -120,6 +127,22 @@ def contact(request):
             sender_email = form.cleaned_data['sender_email']
             subject = form.cleaned_data['subject']
             message = form.cleaned_data['message']
+            send_mail(
+                subject=subject,
+                message=message,
+                html_message=render_to_string('contact_email.html', {
+                    'sender_name': sender_name,
+                    'sender_email': sender_email,
+                    'message': message,
+                    'date_time': timezone.now()
+                }),
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list = AdminUser.objects.filter(is_superuser=True).values_list(
+                    'email', 
+                    flat=True
+                ),
+                fail_silently=False
+            )
             return JsonResponse({})
         else:
             return JsonResponse({'form': form.as_div()}, status=400)

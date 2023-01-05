@@ -8,11 +8,6 @@ import django_heroku
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SPIN_SOCKET_BASE_DIR = 'https://spin-socketio.jerrytq.com'
-
-SECRET_KEY = os.environ['SECRET_KEY']
-SPIN_JWT_SECRET = os.environ['SPIN_JWT_SECRET']
-SPIN_SOCKET_KEY = os.environ['SPIN_SOCKET_KEY']
 
 DEBUG = False
 
@@ -21,14 +16,14 @@ ALLOWED_HOSTS = ['.jerrytq.com']
 
 # Application definition
 INSTALLED_APPS = [
-    'spin',
-    'jerrytq',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'spin',
+    'jerrytq',
     'corsheaders',
     'adminsortable2',
 ]
@@ -52,7 +47,7 @@ ROOT_URLCONF = 'fortress.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'jerrytq/templates/jerrytq'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -115,6 +110,23 @@ USE_TZ = True
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = '/static/'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+# Email 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ['EMAIL_HOST']
+EMAIL_PORT = os.environ['EMAIL_PORT']
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ['EMAIL_HOST_USER']
+EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
+
+
+# Apps
+SPIN_SOCKET_BASE_DIR = 'https://spin-socketio.jerrytq.com'
+
+SECRET_KEY = os.environ['SECRET_KEY']
+SPIN_JWT_SECRET = os.environ['SPIN_JWT_SECRET']
+SPIN_SOCKET_KEY = os.environ['SPIN_SOCKET_KEY']
 
 # Others
 CORS_ALLOW_CREDENTIALS = True
