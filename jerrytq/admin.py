@@ -6,6 +6,9 @@ from jerrytq import models
 class ImageLinkAdmin(admin.ModelAdmin):
     pass
 
+class ProjectLinkAdmin(admin.ModelAdmin):
+    pass
+
 class TechnologyAdmin(admin.ModelAdmin):
     pass
 
@@ -30,7 +33,7 @@ class TechnologyToProjectInline(SortableTabularInline, admin.TabularInline):
 
 class ProjectAdmin(SortableAdminMixin, admin.ModelAdmin):
     prepopulated_fields = {'slug': ['name']}
-    filter_horizontal = ('project_links',)
+    # filter_horizontal = ('project_links',)
     inlines = (ProjectCreditToProjectInline, ImageLinkToProjectInline, TechnologyToProjectInline)
 
 class TermAdmin(admin.ModelAdmin):
@@ -41,6 +44,7 @@ class CourseAdmin(SortableAdminMixin, admin.ModelAdmin):
     pass
 
 admin.site.register(models.ImageLink, ImageLinkAdmin)
+admin.site.register(models.ProjectLink, ProjectLinkAdmin)
 admin.site.register(models.Technology, TechnologyAdmin)
 admin.site.register(models.Skill, SkillAdmin)
 admin.site.register(models.Project, ProjectAdmin)
