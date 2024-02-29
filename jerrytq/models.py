@@ -96,7 +96,7 @@ class Project(models.Model):
         through='ImageLinkToProject'
     )
     description = models.TextField(default="")
-    project_links = models.ManyToManyField(ProjectLink)
+    project_links = models.ManyToManyField(ProjectLink, blank=True)
     technologies = models.ManyToManyField(
         Technology,
         through='TechnologyToProject'
