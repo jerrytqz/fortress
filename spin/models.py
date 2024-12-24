@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class User(models.Model):
     id = models.AutoField(primary_key=True)
 
@@ -17,10 +18,11 @@ class User(models.Model):
     epic_unboxed = models.IntegerField(default=0)
     holy_unboxed = models.IntegerField(default=0)
     godly_unboxed = models.IntegerField(default=0)
-    tq_unboxed = models.IntegerField(default=0) 
+    tq_unboxed = models.IntegerField(default=0)
 
     def __str__(self):
-        return self.username 
+        return self.username
+
 
 class BlacklistedJWT(models.Model):
     id = models.AutoField(primary_key=True)
@@ -30,12 +32,13 @@ class BlacklistedJWT(models.Model):
 
     def __str__(self):
         return self.jwt
-    
+
     class Meta:
         verbose_name = 'blacklisted JWT'
         verbose_name_plural = 'blacklisted JWTs'
 
-class Item(models.Model): 
+
+class Item(models.Model):
     id = models.AutoField(primary_key=True)
 
     name = models.CharField(max_length=32, unique=True)
@@ -46,10 +49,11 @@ class Item(models.Model):
     def __str__(self):
         return self.name
 
-    class Meta: 
+    class Meta:
         ordering = ['name']
 
-class InventoryItem(models.Model): 
+
+class InventoryItem(models.Model):
     id = models.AutoField(primary_key=True)
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -58,10 +62,11 @@ class InventoryItem(models.Model):
 
     def __str__(self):
         return self.user.username + ' | ' + self.item.name
-    
-    class Meta: 
+
+    class Meta:
         ordering = ['user', 'item']
-    
+
+
 class MarketItem(models.Model):
     id = models.AutoField(primary_key=True)
 
@@ -74,5 +79,5 @@ class MarketItem(models.Model):
         return self.user.username + ' | ' + self.item.name + ' | ' + str(
             self.price) + ' SP'
 
-    class Meta: 
+    class Meta:
         ordering = ['user', 'item', 'price']

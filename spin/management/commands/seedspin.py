@@ -6,6 +6,7 @@ import urllib.request
 
 CSV_PATH = 'https://starship.jerrytq.com/spin/items/items.csv'
 
+
 class Command(BaseCommand):
     help = 'Seeds the Spin database with items'
 
@@ -16,9 +17,9 @@ class Command(BaseCommand):
         except Exception as e:
             print("Could not open seeder file")
             return
-        
+
         reader = csv.reader(file)
-        next(reader) # Skip header
+        next(reader)  # Skip header
 
         for i, row in enumerate(reader):
             try:
@@ -26,13 +27,13 @@ class Command(BaseCommand):
                     name=row[0],
                     defaults={'name': row[0], 'rarity': row[1], 'description': row[2]}
                 )
-            
+
                 if created:
                     item.rarity = row[1]
                     item.description = row[2]
                     item.in_circulation = 0
                     item.save()
-                
+
             except Exception as e:
-                print("Failed in row {} with {}".format(i + 2, e)) # Define header as row 1
+                print("Failed in row {} with {}".format(i + 2, e))  # Define header as row 1
                 break

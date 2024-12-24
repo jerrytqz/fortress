@@ -9,12 +9,12 @@ SPIN_JWT_SECRET = settings.SPIN_JWT_SECRET
 
 # Constants
 SPIN_PRICE = 500
-JWT_EXPIRATION_TIME = 3600 # Seconds
-FREE_SP_TIMEOUT = 7200 # Seconds
-FREE_SP_LOW = 1500 
-FREE_SP_HIGH = 3000 
+JWT_EXPIRATION_TIME = 3600  # Seconds
+FREE_SP_TIMEOUT = 7200  # Seconds
+FREE_SP_LOW = 1500
+FREE_SP_HIGH = 3000
 MAX_LIST_PRICE = 10000000
-LIST_PRICE_PER_FEE = 20 
+LIST_PRICE_PER_FEE = 20
 
 RARITIES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Holy', 'Godly', '???']
 RARITY_TO_VALUE = {
@@ -28,6 +28,8 @@ RARITY_TO_VALUE = {
 }
 
 # Functions
+
+
 def map_degree_to_rarity(degree):
     if 0 <= degree and degree < 187.2:
         return RARITIES[0]
@@ -37,23 +39,24 @@ def map_degree_to_rarity(degree):
         return RARITIES[2]
     if 313.2 <= degree and degree < 349.2:
         return RARITIES[3]
-    if 349.2 <= degree and degree < 358.2: 
+    if 349.2 <= degree and degree < 358.2:
         return RARITIES[4]
     if 358.2 <= degree and degree < 359.964:
         return RARITIES[5]
     if 359.964 <= degree and degree < 360:
         return RARITIES[6]
-        
-def authenticate(request, errorName, errorMessage): 
+
+
+def authenticate(request, errorName, errorMessage):
     for token in BlacklistedJWT.objects.all():
-        if request.headers.get('Authorization') == token.jwt: 
+        if request.headers.get('Authorization') == token.jwt:
             return False, JsonResponse({errorName: errorMessage}, status=401)
     try:
         decoded = jwt.decode(
-            request.headers.get('Authorization'), 
-            SPIN_JWT_SECRET, 
+            request.headers.get('Authorization'),
+            SPIN_JWT_SECRET,
             algorithms=['HS256']
         )
     except:
         return False, JsonResponse({errorName: errorMessage}, status=401)
-    return True, decoded 
+    return True, decoded

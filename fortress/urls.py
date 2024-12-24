@@ -13,4 +13,4 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('jerrytq/', include('jerrytq.urls')),
     path('spin/', include('spin.urls'))
-] 
+]
