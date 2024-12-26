@@ -184,8 +184,10 @@ def fetch_project_cards(request):
         'name': project.name,
         'slug': project.slug,
         'imageLink': {
-            'url': project.image_links.all().first().url if project.image_links.exists() else '',
-            'alt': project.image_links.all().first().name if project.image_links.exists() else ''
+            'url': project.image_links.all().order_by('imagelinktoproject').first().url
+            if project.image_links.exists() else '',
+            'alt': project.image_links.all().order_by('imagelinktoproject').first().name
+            if project.image_links.exists() else ''
         },
         'shortDescription': project.short_description
     } for project in projects]})
