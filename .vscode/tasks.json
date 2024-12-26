@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Fortress",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "cd fortress_env; .\\Scripts\\Activate.ps1; cd ..; py manage.py runserver --settings=fortress.development_settings"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}
