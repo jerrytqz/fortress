@@ -30,6 +30,7 @@ class ImageLinkToProjectInline(SortableTabularInline, admin.TabularInline):
     model = models.Project.image_links.through
     verbose_name = 'image link'
     extra = 0
+    min_num = 1
 
 
 class TechnologyToProjectInline(SortableTabularInline, admin.TabularInline):

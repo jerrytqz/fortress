@@ -172,3 +172,20 @@ def fetch_experiences(request):
             'alt': experience.image_link.name
         }
     } for experience in experiences]})
+
+
+def fetch_project_cards(request):
+    if request.method != 'GET':
+        return JsonResponse({'error': "Request error"}, status=400)
+
+    projects = Project.objects.all()
+
+    return JsonResponse({'projectCards': [{
+        'name': project.name,
+        'slug': project.slug,
+        'imageLink': {
+            'url': project.image_links.all().first().url if project.image_links.exists() else '',
+            'alt': project.image_links.all().first().name if project.image_links.exists() else ''
+        },
+        'shortDescription': project.short_description
+    } for project in projects]})

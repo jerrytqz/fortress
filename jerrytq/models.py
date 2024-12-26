@@ -102,6 +102,7 @@ class Project(models.Model):
         through='ImageLinkToProject'
     )
     description = models.TextField(default="")
+    short_description = models.TextField(default="", max_length=32)
     project_links = models.ManyToManyField(ProjectLink, blank=True)
     technologies = models.ManyToManyField(
         Technology,
