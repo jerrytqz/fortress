@@ -8,6 +8,10 @@ class ImageLinkAdmin(admin.ModelAdmin):
     pass
 
 
+class ProjectCreditAdmin(admin.ModelAdmin):
+    pass
+
+
 class ProjectLinkAdmin(admin.ModelAdmin):
     pass
 
@@ -59,6 +63,7 @@ class ExperienceAdmin(SortableAdminMixin, admin.ModelAdmin):
     pass
 
 
+admin.site.register(models.ProjectCredit, ProjectCreditAdmin)
 admin.site.register(models.ImageLink, ImageLinkAdmin)
 admin.site.register(models.ProjectLink, ProjectLinkAdmin)
 admin.site.register(models.Technology, TechnologyAdmin)
