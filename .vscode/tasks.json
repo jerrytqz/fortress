@@ -7,7 +7,7 @@
       "command": "powershell",
       "args": [
         "-Command",
-        "cd fortress_env; .\\Scripts\\Activate.ps1; cd ..; py manage.py runserver --settings=fortress.development_settings"
+        "cd fortress_env; .\\Scripts\\Activate.ps1; cd ..; py manage.py runserver 0.0.0.0:8000 --settings=fortress.development_settings"
       ],
       "problemMatcher": [],
       "group": {
