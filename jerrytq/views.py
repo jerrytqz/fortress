@@ -149,7 +149,7 @@ def contact(request):
             )
             return JsonResponse({})
         else:
-            return JsonResponse({'form': form.as_div()}, status=400)
+            return JsonResponse({'error': form.as_div()}, status=400)
     else:
         form = ContactForm()
         return JsonResponse({'form': form.as_div()})
