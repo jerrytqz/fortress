@@ -12,7 +12,7 @@ from django.utils import timezone
 settings = importlib.import_module(os.environ['DJANGO_SETTINGS_MODULE'])
 
 
-def fetch_project_names(request):
+def project_names(request):
     if request.method != 'GET':
         return JsonResponse({'error': "Request error"}, status=400)
 
@@ -24,7 +24,7 @@ def fetch_project_names(request):
     return JsonResponse({'projectNames': response})
 
 
-def fetch_project(request):
+def project(request):
     if request.method != 'GET':
         return JsonResponse({'error': "Request error"}, status=400)
 
@@ -57,7 +57,7 @@ def fetch_project(request):
     }})
 
 
-def fetch_skills(request):
+def skills(request):
     if request.method != 'GET':
         return JsonResponse({'error': "Request error"}, status=400)
 
@@ -105,7 +105,7 @@ def fetch_skills(request):
     }})
 
 
-def fetch_courses(request):
+def courses(request):
     if request.method != 'GET':
         return JsonResponse({'error': "Request error"}, status=400)
 
@@ -155,7 +155,7 @@ def contact(request):
         return JsonResponse({'form': form.as_div()})
 
 
-def fetch_experiences(request):
+def experiences(request):
     if request.method != 'GET':
         return JsonResponse({'error': "Request error"}, status=400)
 
@@ -174,7 +174,7 @@ def fetch_experiences(request):
     } for experience in experiences]})
 
 
-def fetch_project_cards(request):
+def project_cards(request):
     if request.method != 'GET':
         return JsonResponse({'error': "Request error"}, status=400)
 
