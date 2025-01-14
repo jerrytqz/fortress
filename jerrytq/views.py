@@ -3,7 +3,6 @@ from jerrytq.models import Project, Course, Technology, Skill, Experience
 import os
 import importlib
 
-from django.shortcuts import render
 from django.http import JsonResponse
 from django.core.mail import send_mail
 from django.contrib.auth.models import User as AdminUser
